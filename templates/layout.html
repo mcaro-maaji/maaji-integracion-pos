@@ -15,16 +15,17 @@
         <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: #f2fc9e">
             <div class="container-fluid p-0 px-3 justify-content-start gap-3">
                 <div class="navbar-brand" id="toggleSidebar" style="cursor: pointer;">
-                    <img src="static/icons/menu_icon.ico" alt="Menu Icon" width="35" height="30" />
+                    <img src="/static/icons/menu_icon.ico" alt="Menu Icon" width="35" height="30" />
                 </div>
                 <div class="d-flex align-items-center">
                     <a class="navbar-brand" href="https://www.maaji.co/">
-                        <img src="static/maaji_logo.png" alt="Maaji logo" height="35px" />
+                        <img src="/static/maaji_logo.png" alt="Maaji logo" height="35px" />
                     </a>
                     <h4 class="text-secondary">Integración POS</h4>
                 </div>
                 <h3 class="mx-1">|</h3>
-                <h4>Home</h4>
+                {% block page_title %}
+                {% endblock %}
             </div>
         </nav>
 
@@ -45,24 +46,24 @@
                             <button class="accordion-button fw-semibold custom-btn bg-hover-color" type="button"
                                 data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseOne"
                                 aria-expanded="true" aria-controls="panelsStayOpen-collapseOne">
-                                <img src="static/icons/client_icon.ico" alt="client icon" height="30px" class="me-2" />
+                                <img src="/static/icons/client_icon.ico" alt="client icon" height="30px" class="me-2" />
                                 Clientes
                             </button>
                         </h2>
                         <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse">
                             <div class="accordion-body d-flex flex-column gap-1 ps-4">
                                 <a class="nav-link bg-hover-color" href="{{ url_for('tool_clients_cegid') }}">
-                                    <img src="static/icons/store_icon.ico" alt="client icon" height="22px"
+                                    <img src="/static/icons/store_icon.ico" alt="client icon" height="22px"
                                         class="me-2" />
                                     Clientes CEGID Y2
                                 </a>
                                 <a class="nav-link bg-hover-color" href="#">
-                                    <img src="static/icons/shopify_icon.ico" alt="client icon" height="22px"
+                                    <img src="/static/icons/shopify_icon.ico" alt="client icon" height="22px"
                                         class="me-2" />
                                     Clientes Shopify
                                 </a>
                                 <a class="nav-link bg-hover-color" href="#">
-                                    <img src="static/icons/settings_icon.ico" alt="client icon" height="22px"
+                                    <img src="/static/icons/settings_icon.ico" alt="client icon" height="22px"
                                         class="me-2" />
                                     Configuración
                                 </a>
@@ -75,7 +76,7 @@
                 <div class="container p-0 mt-auto">
                     <hr class="mb-3" />
                     <a class="nav-link d-flex hover-color" href="#">
-                        <img src="static/icons/kit_tool_icon.ico" alt="client icon" height="30px" class="me-2" />
+                        <img src="/static/icons/kit_tool_icon.ico" alt="client icon" height="30px" class="me-2" />
                         <h5>Configuración</h5>
                     </a>
                 </div>
@@ -83,7 +84,7 @@
         </div>
 
         <main id="mainContent" class="container p-0">
-            {% block main %}
+            {% block main_content %}
             {% endblock %}
         </main>
 </body>
