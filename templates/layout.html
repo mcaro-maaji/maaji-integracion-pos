@@ -51,7 +51,7 @@
                         </h2>
                         <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse">
                             <div class="accordion-body d-flex flex-column gap-1 ps-4">
-                                <a class="nav-link bg-hover-color" href="#">
+                                <a class="nav-link bg-hover-color" href="{{ url_for('tool_clients_cegid') }}">
                                     <img src="static/icons/store_icon.ico" alt="client icon" height="22px"
                                         class="me-2" />
                                     Clientes CEGID Y2
@@ -82,8 +82,8 @@
             </div>
         </div>
 
-        <main id="mainContent" class="container">
-            {% block home %}
+        <main id="mainContent" class="container p-0">
+            {% block main %}
             {% endblock %}
         </main>
 </body>
