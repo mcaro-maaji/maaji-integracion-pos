@@ -8,7 +8,7 @@ def home():
     """Pagina principal"""
     return render_template("pages/home.html")
 
-@app.route("/tool_clients_cegid")
+@app.route("/tool/clients/cegid")
 def tool_clients_cegid():
     """Pagina para utilizar la herramienta de gestion clientes de CEGID Y2"""
     return render_template("pages/tool_clients_cegid.html")
