@@ -7,5 +7,22 @@
 {% block main_content %}
 <div class="container-fluid">
     <h1>Contenido de Clientes CEGID Y2</h1>
+    <div class="container mt-4">
+        <h3 class="mb-4">Tabla manipulable desde Excel</h3>
+        <div id="excel-table"></div>
+    </div>
+
+    <script>
+        const table = new Tabulator("#excel-table", {
+            height: "500px",
+            data: {{ data|tojson }},
+            columns: {{ columns|tojson }},
+            layout: "fitColumns",
+            movableColumns: true,
+            resizableRows: true,
+            pagination: "local",
+            paginationSize: 10,
+        });
+    </script>
 </div>
 {% endblock %}

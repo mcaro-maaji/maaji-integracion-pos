@@ -11,4 +11,6 @@ def home():
 @app.route("/tool/clients/cegid")
 def tool_clients_cegid():
     """Pagina para utilizar la herramienta de gestion clientes de CEGID Y2"""
-    return render_template("pages/tool_clients_cegid.html")
+    columns = [{"title": "nombre", "field": "nombre"}]
+    data = [{"nombre": "julieta"}, {"nombre": "isabel"}]
+    return render_template("pages/tool_clients_cegid.html", data=data, columns=columns)
