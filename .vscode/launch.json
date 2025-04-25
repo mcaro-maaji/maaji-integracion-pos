@@ -1,0 +1,25 @@
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    // .vscode/launch.json
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "🔍 Depurar cualquier módulo con nombre",
+                "type": "debugpy",
+                "request": "launch",
+                "module": "${input:moduleToRun}",
+                "cwd": "${workspaceFolder}/src",
+                "justMyCode": false,
+                "console": "internalConsole"
+            }
+        ],
+        "inputs": [
+            {
+                "id": "moduleToRun",
+                "type": "promptString",
+                "description": "Nombre del módulo a ejecutar (ej: core.utils)"
+            }
+        ]
+    }
