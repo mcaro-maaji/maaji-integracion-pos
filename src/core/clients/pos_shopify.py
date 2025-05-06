@@ -7,7 +7,7 @@ from pandas import DataFrame
 from utils.json import from_json
 from utils.dataclass import dict_to_dtcls
 from utils.typing import FilePath, ReadBuffer
-from utils.mapfields import MapFields, MapFieldsFunc
+from utils.mapfields import MapFields
 from .pos import ClientsPOS
 from .fields import (
     ClientField as CF, ClientFieldShopifyMx as CFSM,
@@ -183,30 +183,30 @@ class ClientsShopify(ClientsPOS[CFSM]):
         return cls.from_dataclasses(customers, mapfields=mapfields)
 
 MAPFIELDS_POS_SHOPIFY_MX = MapFields(
+    (CFSM.MF_TIPO_DE_DOCUMENTO, CF.TIPOIDENTIFICACION),
     (CFSM.ADDRESS_COMPANY, CF.NUMERODOCUMENTO),
     (CFSM.ADDRESS_ZIP, CF.CODIGOPOSTAL),
     (CFSM.FIRST_NAME, CF.NOMBRERAZONSOCIAL),
     (CFSM.SECOND_NAME, CF.NOMBRE2),
     (CFSM.LAST_NAME, CF.APELLIDO1),
     (CFSM.SECOND_LAST_NAME, CF.APELLIDO2),
-    (CFSM.ADDRESS_LINE_1, CF.FORMULADIRECCION),
     (CFSM.ADDRESS_LINE_1, CF.FORMULADIRECCIONMM),
+    (CFSM.ADDRESS_LINE_1, CF.FORMULADIRECCION),
     (CFSM.ADDRESS_PHONE, CF.TELEFONO1),
     (CFSM.PHONE, CF.TELEFONOMOVIL),
     (CFSM.EMAIL, CF.CORREOCONTACTO),
     (CFSM.CREATED_AT, CF.FECHADECREACION),
-    (CFSM.ADDRESS_PROVINCE, CF.DEPARTAMENTO),
-    mapdata={
-        (CFSM.MF_TIPO_DE_DOCUMENTO, CF.TIPOIDENTIFICACION): [
-            (MapFieldsFunc.EQ, {
-                "Cédula de ciudadanía": "CC",
-                "Cédula de extranjería": "CE",
-                "Pasaporte": "PA",
-                "NIT": "NI",
-                "Tarjeta de extranjería": "TE",
-                "Tarjeta de identidad": "TI"
-            }),
-        ],
-        (CFSM.ADDRESS_COUNTRY, CF.PAIS): [(MapFieldsFunc.EQ, {"Colombia": "169"})]
-    }
+    (CFSM.ADDRESS_COUNTRY, CF.PAIS),
+    (CFSM.ADDRESS_PROVINCE, CF.DEPARTAMENTO)
 )
+
+MAPFIELDS_POS_SHOPIFY_MX[CFSM.MF_TIPO_DE_DOCUMENTO, CF.TIPOIDENTIFICACION].eq.update({
+    "Cédula de ciudadanía": "CC",
+    "Cédula de extranjería": "CE",
+    "Pasaporte": "PA",
+    "NIT": "NI",
+    "Tarjeta de extranjería": "TE",
+    "Tarjeta de identidad": "TI"
+})
+
+MAPFIELDS_POS_SHOPIFY_MX[CFSM.ADDRESS_COUNTRY, CF.PAIS].eq["Colombia"] = "169"

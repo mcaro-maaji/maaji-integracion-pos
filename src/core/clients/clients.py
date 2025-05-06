@@ -24,6 +24,7 @@ from .exceptions import (
     MaxClientsWarning,
     WARNING_MAX_CLIENTS
 )
+
 class Clients:
     """Clase para la gestion de datos de los clientes."""
     __data: DataFrame
@@ -160,6 +161,9 @@ class Clients:
         cliente_sexo = df_field.isin(["F", "M"])
         cliente_sexo = cliente_sexo[~cliente_sexo | (df_field == "")].index
 
+        df_field = self.data[ClientField.PROVEEDOR]
+        proveedor = df_field[~(df_field == "")].index
+
         df_field = self.data[ClientField.CLIENTE]
         cliente = df_field.isin(["X"])
         cliente = cliente[~cliente].index
@@ -201,6 +205,7 @@ class Clients:
             ClientField.APELLIDO1: idx(ClientField.APELLIDO1, ""),
             ClientField.APELLIDO2: idx(ClientField.APELLIDO2, ""),
             ClientField.SEXO: cliente_sexo,
+            ClientField.PROVEEDOR: proveedor,
             ClientField.CLIENTE: cliente,
             ClientField.FORMULADIRECCION: idx(ClientField.FORMULADIRECCION, ""),
             ClientField.FORMULADIRECCIONMM: idx(ClientField.FORMULADIRECCIONMM, ""),
@@ -227,6 +232,7 @@ class Clients:
         """Corrige los campos que tienen un valor por defecto."""
         default_values = {
             ClientField.CLIENTE: "X",
+            ClientField.PROVEEDOR: "",
             ClientField.FECHADENACIMIENTO: "00/00/1900",
             ClientField.FECHADECREACION: "00/00/1900",
             ClientField.ESTADO: "ACTIVO",
@@ -245,7 +251,7 @@ class Clients:
                 all_updates[field] = Series(value, index=analysis[field])
 
     def autofix_numero_doc_cliente(self, analysis: dict[ClientField, Index | MultiIndex],
-                                all_updates: dict[ClientField, Series]):
+                                   all_updates: dict[ClientField, Series]):
         """Añadir actualizaciones respecto al numero de documento del cliente."""
         if len(analysis[ClientField.NUMERODOCUMENTO]) == 0:
             numero_documento = self.data[ClientField.NUMERODOCUMENTO].apply(lambda x: x[0])
@@ -259,11 +265,13 @@ class Clients:
     def autofix_codigo_postal(self, _: dict[ClientField, Index | MultiIndex],
                                 all_updates: dict[ClientField, Series]):
         """Añadir actualizaciones respecto al codigo postal de los clientes."""
-        departamento = self.data[ClientField.CODIGOPOSTAL].apply(lambda x: x[:2])
+        codigo_postal = self.data[ClientField.CODIGOPOSTAL].str[:5]
+        departamento = codigo_postal.str[:2]
 
         all_updates.update({
-            ClientField.DEPARTAMENTO: departamento,
-            ClientField.CODIGOCIUDAD: self.data[ClientField.CODIGOPOSTAL]
+            ClientField.CODIGOPOSTAL: codigo_postal,
+            ClientField.CODIGOCIUDAD: codigo_postal,
+            ClientField.DEPARTAMENTO: departamento
         })
 
     def autofix_nombre_completo(self, analysis: dict[ClientField, Index | MultiIndex],
@@ -283,8 +291,8 @@ class Clients:
         # Nombres completos de las empresas
         if len(analysis[ClientField.TIPOIDENTIFICACION]) == 0:
             idx_empresas = self.data[self.data[ClientField.TIPOIDENTIFICACION] == "NI"].index
-            nombre_contacto = self.data.loc[idx_empresas, ClientField.NOMBRECONTACTO]
             if len(idx_empresas) > 0:
+                nombre_contacto = self.data.loc[idx_empresas, ClientField.NOMBRECONTACTO]
                 all_updates[ClientField.RAZONSOCIALNOMBRES] = nombre_contacto
 
     def autofix_direccion(self, analysis: dict[ClientField, Index | MultiIndex],
@@ -298,8 +306,7 @@ class Clients:
                 lambda x: map_municipios.get(x, "CALLE")
             )
             all_updates[ClientField.FORMULADIRECCIONMM] = municipios
-
-        all_updates[ClientField.FORMULADIRECCION] = self.data[ClientField.FORMULADIRECCIONMM]
+            all_updates[ClientField.FORMULADIRECCION] = municipios
 
     def autofix(self, analysis: dict[ClientField, Index | MultiIndex]):
         """Modifica los datos de los clientes, corrige los valores y establece por defecto."""
@@ -334,17 +341,17 @@ class Clients:
         no_match_fields = self.no_match_fields()
         incorrect_fields = self.incorrect_fields()
         fields_exceptions = [ClientsException(field, list(idx))
-                  for field, idx in analysis.items()
-                  if field in ClientsException and len(idx) > 0]
+                             for field, idx in analysis.items()
+                             if field in ClientsException and len(idx) > 0]
 
         fields_warnings = [ClientsWarning(field, list(idx))
-                    for field, idx in analysis.items()
-                    if field in ClientsWarning and len(idx) > 0]
+                           for field, idx in analysis.items()
+                           if field in ClientsWarning and len(idx) > 0]
 
         return (
             NoMatchClientFieldsWarning(no_match_fields) if no_match_fields else None,
             IncorrectClientFieldsWarning(incorrect_fields) if incorrect_fields else None,
-            MaxClientsWarning() if self.data.index.size > WARNING_MAX_CLIENTS else None,
+            MaxClientsWarning() if self.data.index.size >= WARNING_MAX_CLIENTS else None,
             fields_exceptions,
             fields_warnings
         )

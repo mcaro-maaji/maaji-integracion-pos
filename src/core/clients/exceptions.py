@@ -4,7 +4,7 @@ from typing import Literal
 from enum import StrEnum
 from .fields import ClientField
 
-WARNING_MAX_CLIENTS = 100
+WARNING_MAX_CLIENTS = 200
 
 class IDMSG(StrEnum):
     """IDs para identificar mensajes de errores."""
@@ -38,6 +38,7 @@ MSG_WARN_CLIENTS: dict[T_IDMSG, str] = {
     ClientField.APELLIDO1: "se recomienda colocar el apellido al cliente",
     ClientField.APELLIDO2: "se recomienda colocar el segundo apellido al cliente",
     ClientField.SEXO: "solo se admiten estos valores ['F', 'M']",
+    ClientField.PROVEEDOR: "debe estar vacio.",
     ClientField.CLIENTE: "solo se admite el valor equis 'X'",
     ClientField.TELEFONO1: "se recomienda colocar el numero telefono al cliente",
     ClientField.TELEFONOMOVIL: "se recomienda colocar el numero telefono celular al cliente",

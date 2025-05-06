@@ -38,7 +38,7 @@ class ClientsPOS(Generic[_KP_co], Clients):
         """Mapeo de los campos y homolacion de los datos."""
         return self.__mapfields
 
-    def no_match_fields(self) -> set[tuple[_KP_co | None, ClientField]]:
+    def no_match_fields(self) -> set[tuple[_KP_co, ClientField]]:
         mapfields = super().no_match_fields()
         set_fields = set()
 
@@ -54,19 +54,21 @@ class ClientsPOS(Generic[_KP_co], Clients):
         incorrect_list = [i for i in self.data_pos if i not in self.mapfields.fields_1]
         return set(incorrect_list)
 
-    def sort_fields(self, fields: list[_KP_co] = None):
-        list_map_fields = fields if fields else [str(mf) for mf in self.mapfields.fields_1]
-        self.data_pos = self.data_pos[list_map_fields]
+    def sort_fields(self, fields: set[_KP_co] = None):
+        map_fields = fields if fields else set(str(mf) for mf in self.mapfields.fields_1)
+        map_fields = list(map_fields)
+        self.data_pos = self.data_pos[map_fields]
         super().sort_fields()
 
-    def fix(self, data: dict[tuple[_KP_co | None, ClientField], Series]):
+    def fix(self, data: dict[tuple[_KP_co, ClientField], Series]):
         data_fields = {k[0]: v for k, v in data.items()}
         data_mapfields: dict[ClientField, Series] = {}
 
         for (field, mapfield), value in data.items():
-            if (field, mapfield) in self.mapfields.mapdata:
-                for func_mapfield in self.mapfields.multi_funcs((field, mapfield)).values():
-                    value = value.apply(func_mapfield)
+            if (field, mapfield) in self.mapfields:
+                callback = self.mapfields[field, mapfield].lookup()
+                if callback:
+                    value = value.apply(callback)
 
             data_mapfields[mapfield] = value
 
@@ -77,7 +79,7 @@ class ClientsPOS(Generic[_KP_co], Clients):
         self.data_pos = self.data_pos.fillna("")
         super().normalize()
 
-    def analyze(self) -> dict[tuple[_KP_co | None, ClientField], Index | MultiIndex]:
+    def analyze(self) -> dict[tuple[_KP_co, ClientField], Index | MultiIndex]:
         analysis = super().analyze()
         analysis_pos = {}
 
@@ -90,27 +92,27 @@ class ClientsPOS(Generic[_KP_co], Clients):
 
         return analysis_pos
 
-    def autofix(self, analysis: dict[tuple[_KP_co | None, ClientField], Index | MultiIndex]):
+    def autofix(self, analysis: dict[tuple[_KP_co, ClientField], Index | MultiIndex]):
         # NO autofix client data pos
         # autofix client data
         super_analysis = {mapfield: v for (_, mapfield), v in analysis.items()}
         super().autofix(super_analysis)
 
-    def mapdata(self, mapfields: set[tuple[_KP_co | None, ClientField]]):
+    def mapdata(self, mapfields: set[tuple[_KP_co, ClientField]]):
         """Toma los datos de los campos principales y los mapea en los campos que relaciona."""
         data = {}
 
         for (field, mapfield) in mapfields:
             value = self.data_pos[field] if not field is None else self.data[mapfield]
-            data[(field, mapfield)] = value
+            data[field, mapfield] = value
 
         self.fix(data)
 
-    def fullfix(self) -> dict[tuple[_KP_co | None, ClientField], Index | MultiIndex]:
+    def fullfix(self) -> dict[tuple[_KP_co, ClientField], Index | MultiIndex]:
         self.normalize() # crea los campos que no existen para el mapeo.
         self.mapdata(self.mapfields)
         return super().fullfix()
 
-    def exceptions(self, analysis: dict[tuple[_KP_co | None, ClientField], Index | MultiIndex]):
+    def exceptions(self, analysis: dict[tuple[_KP_co, ClientField], Index | MultiIndex]):
         analysis_mapfields = {mapfields[1]: v for mapfields, v in analysis.items()}
         return super().exceptions(analysis_mapfields)
