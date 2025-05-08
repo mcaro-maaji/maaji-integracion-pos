@@ -10,7 +10,7 @@ from .types import (
     ServiceParamError,
     ServiceOptReturn,
     ServiceOptParameter,
-    ServiceOperation as _ServiceOperation,
+    ServiceOperation as AbsServiceOperation,
 )
 
 def _return_default(_) -> ServiceResult:
@@ -25,7 +25,7 @@ return_default = ServiceOptReturn(
     func=_return_default
 )
 
-class ServiceOperation(_ServiceOperation):
+class ServiceOperation(AbsServiceOperation):
     """Crea una operacion de un servicio."""
     __param_args: list[ServiceOptParameter] = None
     __param_kwargs: dict[str, ServiceOptParameter] = None

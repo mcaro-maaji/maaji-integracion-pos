@@ -6,6 +6,7 @@ __all__ = [
     "ServiceObj",
     "ServiceOptParameter",
     "ServiceOptReturn",
+    "AbsServiceOperation",
     "ServiceOperation",
     "Service",
     "ServicesGroup",
@@ -16,8 +17,9 @@ from .types import (
     ServiceObj,
     ServiceOptParameter,
     ServiceOptReturn,
-    ServiceOperation,
+    ServiceOperation as AbsServiceOperation,
     Service,
     ServicesGroup,
     ServicesGroups
 )
+from .operation import ServiceOperation
