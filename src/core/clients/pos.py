@@ -12,10 +12,14 @@ class ClientsPOS(Generic[_KP_co], Clients):
     __mapfields: MapFields[_KP_co, ClientField]
     __data_pos: DataFrame
 
-    def __init__(self, filepath_or_buffer: FilePath | ReadBuffer | ExcelFile | ReadCsvBuffer,
-                 ftype: Literal["excel", "csv", "json"] = "csv", *, delimiter="|",
+    def __init__(self,
+                 filepath_or_buffer: FilePath | ReadBuffer | ExcelFile | ReadCsvBuffer,
+                 *,
+                 ftype: Literal["excel", "csv", "json"] = "csv",
+                 delimiter="|",
+                 encoding="utf-8",
                  mapfields: MapFields[_KP_co, ClientField]):
-        super().__init__(filepath_or_buffer, ftype, delimiter=delimiter)
+        super().__init__(filepath_or_buffer, ftype=ftype, delimiter=delimiter, encoding=encoding)
         self.__mapfields = mapfields
         self.__data_pos = self.data.copy()
         self.data = DataFrame(index=self.data.index.copy())

@@ -29,15 +29,22 @@ class Clients:
     """Clase para la gestion de datos de los clientes."""
     __data: DataFrame
 
-    def __init__(self, filepath_or_buffer: FilePath | ReadBuffer | ExcelFile | ReadCsvBuffer,
-                 ftype: Literal["excel", "csv", "json"] = "csv", *, delimiter="|"):
+    def __init__(self,
+                 filepath_or_buffer: FilePath | ReadBuffer | ExcelFile | ReadCsvBuffer,
+                 *,
+                 ftype: Literal["excel", "csv", "json"] = "csv",
+                 delimiter="|",
+                 encoding="utf-8"):
         """Gestionar la informacion de los clientes en formato CSV, JSON y Excel."""
         if ftype == "excel":
             self.__data = read_excel(filepath_or_buffer, dtype=str)
         elif ftype == "csv":
-            self.__data = read_csv(filepath_or_buffer, delimiter=delimiter, dtype=str)
+            self.__data = read_csv(filepath_or_buffer,
+                                   delimiter=delimiter,
+                                   dtype=str,
+                                   encoding=encoding)
         elif ftype == "json":
-            self.__data = read_json(filepath_or_buffer, dtype=str)
+            self.__data = read_json(filepath_or_buffer, dtype=str, encoding=encoding)
         else:
             raise TypeError("El tipo de archivo es incorrecto.")
         self.__data = self.__data.fillna("")
@@ -227,7 +234,8 @@ class Clients:
             ClientField.DIVISA: idx(ClientField.DIVISA, "COP")
         }
 
-    def autofix_default(self, analysis: dict[ClientField, Index | MultiIndex],
+    def autofix_default(self,
+                        analysis: dict[ClientField, Index | MultiIndex],
                         all_updates: dict[ClientField, Series]):
         """Corrige los campos que tienen un valor por defecto."""
         default_values = {
@@ -250,7 +258,8 @@ class Clients:
             if field in analysis and len(analysis[field]) > 0:
                 all_updates[field] = Series(value, index=analysis[field])
 
-    def autofix_numero_doc_cliente(self, analysis: dict[ClientField, Index | MultiIndex],
+    def autofix_numero_doc_cliente(self,
+                                   analysis: dict[ClientField, Index | MultiIndex],
                                    all_updates: dict[ClientField, Series]):
         """Añadir actualizaciones respecto al numero de documento del cliente."""
         if len(analysis[ClientField.NUMERODOCUMENTO]) == 0:
@@ -262,8 +271,9 @@ class Clients:
                 ClientField.CODIGOALTERNOCONTACTO: numero_documento
             })
 
-    def autofix_codigo_postal(self, _: dict[ClientField, Index | MultiIndex],
-                                all_updates: dict[ClientField, Series]):
+    def autofix_codigo_postal(self,
+                              _: dict[ClientField, Index | MultiIndex],
+                              all_updates: dict[ClientField, Series]):
         """Añadir actualizaciones respecto al codigo postal de los clientes."""
         codigo_postal = self.data[ClientField.CODIGOPOSTAL].str[:5]
         departamento = codigo_postal.str[:2]
@@ -274,7 +284,8 @@ class Clients:
             ClientField.DEPARTAMENTO: departamento
         })
 
-    def autofix_nombre_completo(self, analysis: dict[ClientField, Index | MultiIndex],
+    def autofix_nombre_completo(self,
+                                analysis: dict[ClientField, Index | MultiIndex],
                                 all_updates: dict[ClientField, Series]):
         """Corrige los campos respecto a los nombres de los clientes y de tipo empresas."""
         nombre_completo = (
@@ -295,7 +306,8 @@ class Clients:
                 nombre_contacto = self.data.loc[idx_empresas, ClientField.NOMBRECONTACTO]
                 all_updates[ClientField.RAZONSOCIALNOMBRES] = nombre_contacto
 
-    def autofix_direccion(self, analysis: dict[ClientField, Index | MultiIndex],
+    def autofix_direccion(self,
+                          analysis: dict[ClientField, Index | MultiIndex],
                           all_updates: dict[ClientField, Series]):
         """Corrige los campos respecto a las direcciones de los clientes."""
         idx_direccion = analysis[ClientField.FORMULADIRECCIONMM]

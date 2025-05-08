@@ -156,7 +156,8 @@ class ClientsShopify(ClientsPOS[CFSM]):
         return df_clients
 
     @classmethod
-    def from_json(cls, source: FilePath | LiteralString | ReadBuffer | dict, *,
+    def from_json(cls,
+                  source: FilePath | LiteralString | ReadBuffer | dict, *,
                   mapfields: MapFields[CFSM, CF]):
         """Obtener los clientes de Shopify mediante el formato JSON,
         API de Shopify Version: 2024-01"""
