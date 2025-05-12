@@ -10,7 +10,8 @@ from typing import (
     Generic,
     TypeVar,
     Union,
-    Never
+    Never,
+    overload
 )
 
 T = TypeVar("T", bound="ServiceObj")
@@ -90,6 +91,34 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
     def desc(self):
         """Descripcion del objeto del servicio."""
         return self.__desc
+
+    @overload
+    def paths(self) -> list[list["ServiceObj"]]: ...
+    @overload
+    def paths(self, *, attr: str) -> list[list[Any]]: ...
+    def paths(self, *, attr: str = None):
+        """Busca los ServiceObj anidados y los devuelve como rutas, opcional los atributos."""
+        if not attr is None and not hasattr(self, attr):
+            raise AttributeError(f"En el ServiceObj no se ha encontrado el attributo '{attr}'")
+
+        def _collect_obj(current: ServiceObj, path: list[ServiceObj]):
+            paths = [path]
+            for value in current.values():
+                paths.extend(_walk_value(value, path))
+            return paths
+
+        def _walk_value(obj: ServiceObj, path: list[ServiceObj]):
+            found = []
+            if isinstance(obj, ServiceObj):
+                value = obj if attr is None else getattr(obj, attr)
+                found.extend(_collect_obj(obj, path + [value]))
+            elif isinstance(obj, (list, tuple)):
+                for item in obj:
+                    found.extend(_walk_value(item, path))
+            return found
+
+        value = self if attr is None else getattr(self, attr)
+        return _collect_obj(self, [value])
 
     def get(self, *names: str) -> Union["ServiceObj", None]:
         """Obtener el ServiceInfo por la ruta de nombres, sino lo encuentra devuelve None."""
