@@ -150,9 +150,15 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
         info = {}
 
         for k, v in self.items():
-            if isinstance(v, (tuple, list)):
-                v = [i.to_dict() for i in v]
+            if isinstance(v, ServiceObj):
+                v = v.to_dict()
+            elif isinstance(v, (tuple, list)):
+                v = [i.to_dict() if isinstance(i, ServiceObj) else i for i in v]
+            elif isinstance(v, dict):
+                v = {sk:sv.to_dict() if isinstance(sv, ServiceObj) else sv
+                     for sk, sv in v.items()}
             info[k] = v
+
         if not info:
             info = self.to_dict()
         return info
