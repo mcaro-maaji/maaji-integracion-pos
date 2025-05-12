@@ -23,3 +23,12 @@ from .types import (
     ServicesGroups
 )
 from .operation import ServiceOperation
+from .mapfields import mapfields_servicesgroup
+from .clients import clients_servicesgroup
+
+services_groups = [
+    mapfields_servicesgroup,
+    clients_servicesgroup
+]
+
+SERVICES_GROUPS = ServicesGroups(name="services_groups", services_groups=services_groups)
