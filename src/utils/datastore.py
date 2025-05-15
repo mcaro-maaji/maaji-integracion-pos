@@ -12,19 +12,19 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
     cache: dict[UUID, "DataStore"] = {}
     __create_at: datetime
     maxsize: int
-    maxitems: int
+    maxlen: int
     maxtime: timedelta
     getsize: Callable[[VT], int]
 
-    def __init__(self, *args: VT, maxsize: int, maxitems: int = None, maxtime: timedelta = None):
-        if not maxitems:
-            maxitems = len(args)
-        args = args[0:maxitems]
+    def __init__(self, *args: VT, maxsize: int, maxlen: int = None, maxtime: timedelta = None):
+        if not maxlen:
+            maxlen = len(args)
+        args = args[0:maxlen]
 
         if not maxtime:
             maxtime = timedelta(minutes=10)
 
-        self.maxitems = maxitems
+        self.maxlen = maxlen
         self.maxsize = maxsize
         self.maxtime = maxtime
         self.getsize = lambda __value: self.maxsize
@@ -40,56 +40,72 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
         return self.__create_at
 
     @property
-    def maxtime_total(self):
-        """Obtener la duracion del DataStore."""
-        return self.maxtime * self.maxitems
+    def length(self):
+        """Cantidad actual de elementos del DataStore."""
+        return len(self)
 
     @property
-    def current_size(self):
-        """Obtener el tamaño total actual de DataStore."""
+    def size(self):
+        """Tamaño actual del DataStore."""
         size = 0
         for item in self.values():
             size += self.getsize(item)
         return size
 
     @property
-    def maxsize_total(self):
-        """Obtener el tamaño estimado: maxsize * maxitems."""
-        return self.maxsize * self.maxitems
+    def time_elapsed(self):
+        """Tiempo transcurrido actual del DataStore."""
+        return datetime.now() - self.create_at
 
-    def time_pop(self, *, key: UUID, time: datetime = None):
-        """Elimina un elemento segun la diferencia entre el tiempo y desde que se creo."""
-        if time >= (self.create_at + self.maxtime):
-            return self.pop(key, None)
-        return None
+    __last_expected_items_deleted = 0
 
-    def time_popitem(self, time: datetime = None):
-        """Elimina el ultimo elemento segun la diferencia entre el tiempo y desde que se creo."""
-        if time >= (self.create_at + self.maxtime):
-            return self.popitem()
+    def __is_item_to_pop(self):
+        expected_items_deleted = int(self.time_elapsed / self.maxtime)
+        if expected_items_deleted > self.__last_expected_items_deleted:
+            self.__last_expected_items_deleted = expected_items_deleted
+            return True
+        return False
+
+    def time_pop(self, *, key: UUID, default: VT = None):
+        """Elimina un elemento si ha expirado el tiempo."""
+        if self.__is_item_to_pop():
+            return UserDict.pop(self, key, default=default)
+        return default
+
+    def time_popitem(self) -> tuple[UUID, VT]:
+        """Elimina el ultimo elemento si ha expirado el tiempo."""
+        if self.__is_item_to_pop():
+            return UserDict.popitem(self)
         return None
 
     def time_clear(self):
-        """Elimina los elementos segun la diferencia entre el tiempo actual y desde que se creo."""
-        self.time_popitem(datetime.now())
+        """Funcion en main loop, elimina el ultimo elemento si ha expirado el tiempo."""
+        self.time_popitem()
 
     def __getitem__(self, key):
-        data = super().__getitem__(key)
+        try:
+            data = super().__getitem__(key)
+        except KeyError as err:
+            msg = f"no se ha encontrado el elemento con la llave UUID: '{key}'"
+            raise MemoryError(msg) from err
         self.time_clear()
         return data
 
     def get(self, key: UUID, default: VT = None):
-        data = super().get(key, default)
-        self.time_clear()
-        return data
+        try:
+            return self[key]
+        except MemoryError:
+            return default
 
     def __setitem__(self, key, item):
         self.time_clear()
 
-        if key not in self and len(self) + 1 > self.maxitems:
-            raise MemoryError(f"fuera de capacidad maxima de elementos: {self.maxitems}")
-        if self.current_size + self.getsize(item) > self.maxsize_total:
-            raise MemoryError(f"fuera de capacidad maxima de tamaño: {self.maxsize_total}")
+        if key not in self and self.length + 1 > self.maxlen:
+            raise MemoryError(f"fuera de capacidad maxima de elementos: '{self.maxlen}'")
+
+        total_maxsize = self.maxsize * self.maxlen
+        if self.size + self.getsize(item) > total_maxsize:
+            raise MemoryError(f"fuera de capacidad maxima de tamaño: '{total_maxsize}'")
 
         super().__setitem__(key, item)
 
@@ -99,8 +115,15 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
         self[uuid] = value
         return uuid
 
-    def update(self, *args: tuple[UUID, VT]) -> None:
-        for key, value in args:
+    def update(self, other=None, /, **kwargs):
+        if not other is None:
+            if isinstance(other, dict):
+                for key, value in other.items():
+                    self[key] = value
+            else:
+                for key, value in other:
+                    self[key] = value
+        for key, value in kwargs.items():
             self[key] = value
 
     def extend(self, *args: VT):
@@ -111,6 +134,6 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
     @classmethod
     def cache_clear(cls):
         """Funcion en un main loop para ir limpiando la cache."""
-        for datastore  in cls.cache.values():
+        for datastore in cls.cache.values():
             if datastore:
                 datastore.time_clear()
