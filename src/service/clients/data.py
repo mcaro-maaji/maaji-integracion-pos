@@ -7,7 +7,7 @@ from core.clients import ClientsPOS, ClientsCegid, ClientsShopify
 from utils.datastore import DataStore
 from service.types import Service
 from service.operation import ServiceOperation
-from service.params import return_uuid
+from service.params import return_uuid, return_list_uuid
 from service.mapfields.clients import (
     _opt_getall as mapfields_getall,
     _opt_get as mapfields_get
@@ -26,7 +26,7 @@ from .params import (
 )
 
 CLIENTS_DATASTORE: DataStore[ClientsPOS] = DataStore(
-    maxitems=5,                     # 5 sitios disponibles para crear data Clients.
+    maxlen=5,                     # 5 sitios disponibles para crear data Clients.
     maxsize=10 * 1e6                # 10 Megabytes.
     # maxtime=datetime(minutes=10)  # maxtotal_size = 25 minutos
 )
@@ -134,6 +134,16 @@ def _opt_fromfile(fpath: Path,
 
 opt_fromfile = ServiceOperation(name="fromfile", func=_opt_fromfile, **params_fromfile)
 
+params_getall = {
+    "parameters": [],
+    "return": return_list_uuid
+}
+
+def _opt_getall():
+    return list(CLIENTS_DATASTORE.keys())
+
+opt_getall = ServiceOperation(name="getall", func=_opt_getall, **params_getall)
+
 params_get = {
     "parameters": [param_uuid_data],
     "parameters_kv": {
@@ -146,8 +156,8 @@ def _opt_get(uuid_clients: UUID, /, from_pos: bool = True):
     try:
         clients = CLIENTS_DATASTORE[uuid_clients]
     except KeyError as err:
-        err.add_note("No se ha encontrado los datos de los clientes con el UUID proporcionado.")
-        raise err
+        msg = "No se ha encontrado los datos de los clientes con el UUID proporcionado."
+        raise KeyError(msg) from err
 
     if from_pos:
         return clients.data_pos.to_dict("split")
@@ -158,6 +168,7 @@ opt_get = ServiceOperation(name="get", func=_opt_get, **params_get)
 operations = [
     opt_fromraw,
     opt_fromfile,
+    opt_getall,
     opt_get
 ]
 

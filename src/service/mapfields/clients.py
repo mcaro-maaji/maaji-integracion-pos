@@ -12,7 +12,7 @@ from .params import return_mapfields
 CLIENTS_MAPFIELDS = DataStore(
     MAPFIELDS_POS_CEGID,
     MAPFIELDS_POS_SHOPIFY_MX,
-    maxitems=12, # 10 sitios disponibles para crear MapFields
+    maxlen=12, # 10 sitios disponibles para crear MapFields
     maxsize=1,
     maxtime=timedelta(days=365*5)
 )
