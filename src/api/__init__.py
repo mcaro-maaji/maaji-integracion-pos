@@ -7,7 +7,7 @@ __all__ = [
     "bp_services"
 ]
 
-from flask import Blueprint
+from quart import Blueprint
 from .services import bp_services
 
 bp_api = Blueprint("api", __name__, url_prefix="/api")

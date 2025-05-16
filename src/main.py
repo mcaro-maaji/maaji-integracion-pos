@@ -1,6 +1,16 @@
 """Modulo de ejecucion principal"""
 
-from app import app
+import asyncio
+from app import server as app_server
+
+async def main():
+    """Ejecuta el proyecto."""
+
+    parallel_process = [
+        app_server
+    ]
+
+    await asyncio.gather(*parallel_process)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    asyncio.run(main())

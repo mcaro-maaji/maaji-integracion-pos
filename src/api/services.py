@@ -1,6 +1,6 @@
 """Modulo para registrar los servicios en la API de la aplicacion."""
 
-from flask import Blueprint, jsonify, request
+from quart import Blueprint, jsonify, request
 from service import SERVICES_GROUPS
 from service.types import ServiceObj, ServiceResult
 from .utils import HTTP_ALL_METHODS
@@ -11,7 +11,7 @@ routes_services = [path[1:] for path in SERVICES_GROUPS.paths(attr="name")]
 routes_services = ["/" + "/".join(route) for route in routes_services]
 
 @bp_services.route("/")
-def services_groups():
+async def services_groups():
     """Ruta principal de los servicios."""
     return jsonify(SERVICES_GROUPS.info())
 
@@ -25,9 +25,9 @@ def handle_get_services(service_obj: ServiceObj):
     """Responde con la informacion del servicio."""
     return jsonify(service_obj.info())
 
-def handle_post_services(service_obj: ServiceObj):
+async def handle_post_services(service_obj: ServiceObj):
     """Ejecuta los servicios y responde con los resultados."""
-    service_params = request.get_json()
+    service_params = await request.get_json()
     result = service_obj.run(service_params)
     return jsonify(result)
 
@@ -38,14 +38,14 @@ def handle_not_method_service(__route: str):
     obj = ServiceResult(data=None, type="ServiceNotImplementedError", errs=errs)
     return jsonify(obj), 405
 
-def handler_services(__route: str):
+async def handler_services(__route: str):
     """Maneja las peticiones de los servicios."""
     service_obj = get_service_obj(__route)
 
     if request.method == "GET":
         return handle_get_services(service_obj)
     if request.method == "POST":
-        return handle_post_services(service_obj)
+        return await handle_post_services(service_obj)
 
     return handle_not_method_service(__route)
 
@@ -53,8 +53,8 @@ for route in routes_services:
     endpoint = route.replace("/", "-")[1:]
     endpoint = endpoint.replace(".", "_")
 
-    def _handler(__route=route):
-        return handler_services(__route)
+    async def _handler(__route=route):
+        return await handler_services(__route)
 
     bp_services.add_url_rule(
         route,
@@ -65,7 +65,7 @@ for route in routes_services:
     )
 
 @bp_services.route('/<path:invalid_path>', methods=HTTP_ALL_METHODS)
-def service_not_found(invalid_path):
+async def service_not_found(invalid_path):
     """Respuesta cuando no existe la ruta del servicio."""
     errs = f"No se ha encontrado el servicio: '{invalid_path}'"
     obj = ServiceResult(data=None, type="ServiceNotFound", errs=errs)
