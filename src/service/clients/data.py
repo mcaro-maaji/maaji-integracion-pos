@@ -26,18 +26,18 @@ from .params import (
 )
 
 CLIENTS_DATASTORE: DataStore[ClientsPOS] = DataStore(
-    maxlen=5,                     # 5 sitios disponibles para crear data Clients.
-    maxsize=10 * 1e6                # 10 Megabytes.
-    # maxtime=datetime(minutes=10)  # maxtotal_size = 25 minutos
+    max_length=5,                         # 5 sitios disponibles para crear data Clients.
+    max_size=10 * 1e6,                    # 10 Megabytes.
+    # max_duration=timedelta(hours=1)     # 12 minutos cada item, total de 60 minutos.
 )
 
-def clients_datastore_getsize(clients: ClientsPOS):
+def clients_datastore_calc_size(clients: ClientsPOS):
     """Callback para calcular el tamaño de los datos de los clientes."""
-    size_data_pos = int(clients.data_pos.memory_usage(deep=True).sum())
-    size = int(clients.data.memory_usage(deep=True).sum())
-    return size + size_data_pos
+    size = int(clients.data_pos.memory_usage(deep=True).sum())
+    size += int(clients.data.memory_usage(deep=True).sum())
+    return size
 
-CLIENTS_DATASTORE.getsize = clients_datastore_getsize
+CLIENTS_DATASTORE.calc_size = clients_datastore_calc_size
 
 def _opt_create(fpath_or_buffer: Path | BytesIO,
                 /,

@@ -84,17 +84,15 @@ param_from_pos = ServiceOptParameter(name="from_pos", type="boolean", func=_para
 def _return_clients_data(value: dict) -> ServiceResult:
     return {
         "data": value,
-        "type": "ClientsPOS"
+        "type": """{
+            'index': [number, ...],
+            'columns': [string, ...],
+            'data': [[string, ...], ...]
+        }"""
     }
 
 return_clients_data = ServiceOptReturn(
     name="return",
-    type="""
-    {
-        'index': ['row1', 'row2', ...],
-        'columns': ['col1', 'col2', ...],
-        'data': [[string, string], [string, string], ...]
-    }
-    """,
+    type="""ClientsPOS""",
     func=_return_clients_data
 )

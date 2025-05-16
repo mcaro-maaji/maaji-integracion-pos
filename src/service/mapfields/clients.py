@@ -3,19 +3,20 @@
 from datetime import timedelta
 from uuid import UUID
 from core.clients import MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX
+from utils.mapfields import MapFields
 from utils.datastore import DataStore
 from service.types import Service
 from service.operation import ServiceOperation
 from service.params import param_key_uuid, return_list_uuid
 from .params import return_mapfields
 
-CLIENTS_MAPFIELDS = DataStore(
-    MAPFIELDS_POS_CEGID,
-    MAPFIELDS_POS_SHOPIFY_MX,
-    maxlen=12, # 10 sitios disponibles para crear MapFields
-    maxsize=1,
-    maxtime=timedelta(days=365*5)
+CLIENTS_MAPFIELDS: DataStore[MapFields] = DataStore(
+    max_length=7, # 5 sitios disponibles para crear MapFields y 2 por defecto.
+    max_size=1,
+    max_duration=timedelta(days=365*5)
 )
+
+CLIENTS_MAPFIELDS.extend(MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX)
 
 def _opt_getall():
     return list(CLIENTS_MAPFIELDS.keys())

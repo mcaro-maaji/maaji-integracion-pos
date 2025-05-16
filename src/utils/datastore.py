@@ -1,6 +1,6 @@
 """Modulo para crear un gestionador de datos, como si fuera un cache."""
 
-from typing import TypeVar, Generic, Callable
+from typing import TypeVar, Generic, Callable, overload
 from collections import UserDict
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
@@ -11,23 +11,34 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
     """Gestiona capacidad de espacio de los datos."""
     cache: dict[UUID, "DataStore"] = {}
     __create_at: datetime
-    maxsize: int
-    maxlen: int
-    maxtime: timedelta
-    getsize: Callable[[VT], int]
+    max_length: int
+    max_size: int
+    max_duration: timedelta
+    calc_size: Callable[[VT], int]
 
-    def __init__(self, *args: VT, maxsize: int, maxlen: int = None, maxtime: timedelta = None):
-        if not maxlen:
-            maxlen = len(args)
-        args = args[0:maxlen]
+    @overload
+    def __init__(self, /, max_length = 1, max_size = 1, max_duration: timedelta = None): ...
+    @overload
+    def __init__(self, *args: VT, max_size = 1, max_duration: timedelta = None): ...
+    def __init__(self, *args: VT, max_length = 1, max_size = 1, max_duration: timedelta = None):
+        if max_length <= 0:
+            max_length = 1
 
-        if not maxtime:
-            maxtime = timedelta(minutes=10)
+        if args:
+            max_length = len(args)
+        else:
+            args = args[0:max_length]
 
-        self.maxlen = maxlen
-        self.maxsize = maxsize
-        self.maxtime = maxtime
-        self.getsize = lambda __value: self.maxsize
+        if max_size <= 0:
+            max_size = 1
+
+        if not max_duration:
+            max_duration = timedelta(hours=1)
+
+        self.max_length = max_length
+        self.max_size = max_size
+        self.max_duration = max_duration
+        self.calc_size = lambda _: self.max_size
         self.__create_at = datetime.now()
 
         super().__init__()
@@ -41,7 +52,7 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
 
     @property
     def length(self):
-        """Cantidad actual de elementos del DataStore."""
+        """Cantidad permitida de elementos del DataStore."""
         return len(self)
 
     @property
@@ -49,7 +60,7 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
         """Tamaño actual del DataStore."""
         size = 0
         for item in self.values():
-            size += self.getsize(item)
+            size += self.calc_size(item)
         return size
 
     @property
@@ -57,30 +68,20 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
         """Tiempo transcurrido actual del DataStore."""
         return datetime.now() - self.create_at
 
-    __last_expected_items_deleted = 0
+    def __count_expired_items(self):
+        max_duration_per_item = self.max_duration / self.max_length
+        count_expired_items = self.time_elapsed / max_duration_per_item
+        count_expired_items = int(count_expired_items)
+        if count_expired_items > self.length:
+            return self.length
+        return count_expired_items
 
-    def __is_item_to_pop(self):
-        expected_items_deleted = int(self.time_elapsed / self.maxtime)
-        if expected_items_deleted > self.__last_expected_items_deleted:
-            self.__last_expected_items_deleted = expected_items_deleted
-            return True
-        return False
-
-    def time_pop(self, *, key: UUID, default: VT = None):
-        """Elimina un elemento si ha expirado el tiempo."""
-        if self.__is_item_to_pop():
-            return UserDict.pop(self, key, default=default)
-        return default
-
-    def time_popitem(self) -> tuple[UUID, VT]:
-        """Elimina el ultimo elemento si ha expirado el tiempo."""
-        if self.__is_item_to_pop():
-            return UserDict.popitem(self)
-        return None
-
-    def time_clear(self):
-        """Funcion en main loop, elimina el ultimo elemento si ha expirado el tiempo."""
-        self.time_popitem()
+    def pop_expired_items(self):
+        """Elimina los ultimos elementos si ha expirado el tiempo."""
+        count_expired_items = self.__count_expired_items()
+        if count_expired_items:
+            for _ in range(count_expired_items):
+                self.popitem()
 
     def __getitem__(self, key):
         try:
@@ -88,7 +89,6 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
         except KeyError as err:
             msg = f"no se ha encontrado el elemento con la llave UUID: '{key}'"
             raise MemoryError(msg) from err
-        self.time_clear()
         return data
 
     def get(self, key: UUID, default: VT = None):
@@ -98,14 +98,12 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
             return default
 
     def __setitem__(self, key, item):
-        self.time_clear()
+        if key not in self and self.length + 1 > self.max_length:
+            raise MemoryError(f"fuera de capacidad maxima de elementos: '{self.max_length}'")
 
-        if key not in self and self.length + 1 > self.maxlen:
-            raise MemoryError(f"fuera de capacidad maxima de elementos: '{self.maxlen}'")
-
-        total_maxsize = self.maxsize * self.maxlen
-        if self.size + self.getsize(item) > total_maxsize:
-            raise MemoryError(f"fuera de capacidad maxima de tamaño: '{total_maxsize}'")
+        total_max_size = self.max_size * self.max_length
+        if self.size + self.calc_size(item) > total_max_size:
+            raise MemoryError(f"fuera de capacidad maxima de tamaño: '{total_max_size}'")
 
         super().__setitem__(key, item)
 
@@ -128,12 +126,14 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
 
     def extend(self, *args: VT):
         """Agregar varios elementos en el DataStore."""
+        uuids: list[UUID] = []
         for item in args:
-            self.append(item)
+            uuids.append(self.append(item))
+        return uuids
 
     @classmethod
-    def cache_clear(cls):
+    def clear_cache(cls):
         """Funcion en un main loop para ir limpiando la cache."""
         for datastore in cls.cache.values():
             if datastore:
-                datastore.time_clear()
+                datastore.pop_expired_items()
