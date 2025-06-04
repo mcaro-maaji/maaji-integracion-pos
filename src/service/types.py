@@ -193,11 +193,11 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
         return info
 
     # abstract method
-    def exec(self, params: ServiceParams = None) -> Never:
+    async def exec(self, params: ServiceParams = None) -> Never:
         """Ejecuta la funcion del ServiceObj, como metodo abstracto esto causa error por defecto."""
         raise ServiceNotImplementedError("No existe una funcion implementada del servicio.")
 
-    def run(self, params: ServiceParams = None) -> ServiceResult:
+    async def run(self, params: ServiceParams = None) -> ServiceResult:
         """Corre el servicio si tiene una funcion implementada,
         sino lanza error: ServiceNotImplementedError."""
         try:
@@ -207,7 +207,7 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
                 raise ServiceParamError(msg)
 
             # return ServiceResult | Never
-            return self.exec(params)
+            return await self.exec(params)
         except ServiceError as err:
             msg = ", ".join(err.args)
             return {

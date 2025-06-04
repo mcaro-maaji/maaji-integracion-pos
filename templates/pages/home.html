@@ -1,10 +1,17 @@
-{% extends "layout.html" %}
+{% extends "layouts/main.html" %}
 
-{% block page_title %}
-<h4>Home</h4>
-{% endblock %}
+{% set page_title = "Home" %}
+{% set navbar_title = "Inicio" %}
+{% set sidebar_is_collapsed = True %}
 
 {% block main_content %}
-<h1>Contenido Principal</h1>
-<p>Render Page Home</p>
+<main class="container">
+    <h1>Pagina Principal</h1>
+    <p>Sin contenido aun...</p>
+    <p>TODO: dashboard y resumen de integracion.</p>
+</main>
+<script type="module">
+    const script = new TemplateScript("pages/home.mjs")
+    await script.exec()
+</script>
 {% endblock %}

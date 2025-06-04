@@ -1,7 +1,7 @@
 """Modulo para definir como se ejecutan las operaciones de los servicios."""
 
 from typing import Any
-from inspect import signature
+from inspect import signature, iscoroutine
 from .types import (
     ServiceParams,
     ServiceResult,
@@ -130,7 +130,7 @@ class ServiceOperation(AbsServiceOperation):
 
         return result_return
 
-    def exec(self, params: ServiceParams = None) -> ServiceResult:
+    async def exec(self, params: ServiceParams = None) -> ServiceResult:
         if self.func is None:
             super().exec(params)
 
@@ -160,7 +160,8 @@ class ServiceOperation(AbsServiceOperation):
             raise ServiceParamError(msg) from err
 
         try:
-            return_arg = func(*bound.args, **bound.kwargs)
+            result = func(*bound.args, **bound.kwargs)
+            return_arg = await result if iscoroutine(result) else result
         except Exception as err:
             msg = f"Ha ocurrido un error en la ejeccion de la operacion '{self.name}', {err}"
             raise ServiceError(msg) from err

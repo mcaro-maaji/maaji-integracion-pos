@@ -1,5 +1,6 @@
 """Modulo para registrar los servicios en la API de la aplicacion."""
 
+import json
 from quart import Blueprint, jsonify, request
 from service import SERVICES_GROUPS
 from service.types import ServiceObj, ServiceResult
@@ -27,8 +28,19 @@ def handle_get_services(service_obj: ServiceObj):
 
 async def handle_post_services(service_obj: ServiceObj):
     """Ejecuta los servicios y responde con los resultados."""
-    service_params = await request.get_json()
-    result = service_obj.run(service_params)
+    if request.content_type.startswith("application/json"):
+        service_params = await request.get_json()
+    elif request.content_type.startswith("multipart/form-data"):
+        payload = (await request.form).get("payload")
+        service_params = json.loads(payload) if payload else {"parameters": []}
+    else:
+        return jsonify({
+            "data": None,
+            "type": "ServiceParamError",
+            "errs": "no se ha cargado el payload de parametros del servicio."
+        })
+
+    result = await service_obj.run(service_params)
     return jsonify(result)
 
 def handle_not_method_service(__route: str):

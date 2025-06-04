@@ -3,9 +3,10 @@
 from uuid import UUID
 from io import BytesIO
 from pathlib import Path
+from quart import request, has_request_context
 from core.clients import ClientsPOS, ClientsCegid, ClientsShopify
 from utils.datastore import DataStore
-from service.types import Service
+from service.types import Service, ServiceError
 from service.operation import ServiceOperation
 from service.params import return_uuid, return_list_uuid
 from service.mapfields.clients import (
@@ -49,16 +50,16 @@ def _opt_create(fpath_or_buffer: Path | BytesIO,
 
     if pos == "shopify":
         uuid_mf_default = mapfields_getall()[1]
-        AliasClientsPOS = ClientsShopify
+        CreateData = ClientsShopify
     else:
         uuid_mf_default = mapfields_getall()[0]
-        AliasClientsPOS = ClientsCegid
+        CreateData = ClientsCegid
 
     if uuid_mapfields is None:
         uuid_mapfields = uuid_mf_default
 
     mapfields = mapfields_get(uuid_mapfields)
-    data = AliasClientsPOS(
+    data = CreateData(
         fpath_or_buffer,
         ftype=ftype,
         delimiter=delimeter,
@@ -102,7 +103,7 @@ def _opt_fromraw(raw: str,
 
 opt_fromraw = ServiceOperation(name="fromraw", func=_opt_fromraw, **params_fromraw)
 
-params_fromfile = {
+params_frompath = {
     "parameters": [param_fpath],
     "parameters_kv": {
         "pos": param_pos,
@@ -114,7 +115,7 @@ params_fromfile = {
     "return": return_uuid
 }
 
-def _opt_fromfile(fpath: Path,
+def _opt_frompath(fpath: Path,
                   /,
                   pos: str = "cegid",
                   ftype: str = "csv",
@@ -124,6 +125,44 @@ def _opt_fromfile(fpath: Path,
 
     uuid = _opt_create(
         fpath,
+        pos=pos,
+        ftype=ftype,
+        delimeter=delimeter,
+        encoding=encoding,
+        uuid_mapfields=uuid_mapfields
+    )
+    return uuid
+
+opt_frompath = ServiceOperation(name="frompath", func=_opt_frompath, **params_frompath)
+
+params_fromfile = {
+    "parameters": [],
+    "parameters_kv": {
+        "pos": param_pos,
+        "ftype": param_ftype,
+        "delimeter": param_delimeter,
+        "encoding": param_encoding,
+        "uuid_mapfields": param_uuid_mapfields
+    },
+    "return": return_uuid
+}
+
+async def _opt_fromfile(*,
+                        pos: str = "cegid",
+                        ftype: str = "csv",
+                        delimeter: str = "|",
+                        encoding: str = "utf-8",
+                        uuid_mapfields: UUID = None):
+
+    if not has_request_context():
+        raise ServiceError("No se ha leido la peticion correctamente.")
+
+    file = (await request.files).get("file")
+    if not file:
+        raise ServiceError("No hay archivo en la peticion.")
+
+    uuid = _opt_create(
+        file,
         pos=pos,
         ftype=ftype,
         delimeter=delimeter,
