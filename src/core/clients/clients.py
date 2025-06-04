@@ -46,7 +46,7 @@ class Clients:
         elif ftype == "json":
             self.__data = read_json(filepath_or_buffer, dtype=str, encoding=encoding)
         else:
-            raise TypeError("El tipo de archivo es incorrecto.")
+            raise TypeError("el tipo de archivo es incorrecto.")
         self.__data = self.__data.fillna("")
 
     @property
@@ -59,7 +59,7 @@ class Clients:
         """Establecer un nuevo set de clientes."""
 
         if not isinstance(value, DataFrame):
-            raise TypeError("El valor no es un DataFrame.")
+            raise TypeError("el valor no es un DataFrame.")
         self.__data = value
 
     def no_match_fields(self):

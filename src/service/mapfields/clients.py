@@ -31,7 +31,7 @@ opt_getall = ServiceOperation(name="getall", func=_opt_getall, **params_getall)
 def _opt_get(key: UUID):
     if key in CLIENTS_MAPFIELDS:
         return CLIENTS_MAPFIELDS[key]
-    raise KeyError(f"No se encuentra el MapFields de Clientes con la llave UUID: {key}")
+    raise KeyError(f"no se encuentra el MapFields de Clientes con la llave UUID: {key}")
 
 params_get = {
     "parameters": [param_key_uuid],

@@ -46,7 +46,7 @@ async def handle_post_services(service_obj: ServiceObj):
 def handle_not_method_service(__route: str):
     """Maneja los metodos que no son permitidos en los servicios."""
     name_service = ".".join(__route.split("/")[-2:])
-    errs = f"El servicio '{name_service}' no permite el metodo HTTP: '{request.method}'"
+    errs = f"el servicio '{name_service}' no permite el metodo HTTP: '{request.method}'"
     obj = ServiceResult(data=None, type="ServiceNotImplementedError", errs=errs)
     return jsonify(obj), 405
 
@@ -79,6 +79,6 @@ for route in routes_services:
 @bp_services.route('/<path:invalid_path>', methods=HTTP_ALL_METHODS)
 async def service_not_found(invalid_path):
     """Respuesta cuando no existe la ruta del servicio."""
-    errs = f"No se ha encontrado el servicio: '{invalid_path}'"
+    errs = f"no se ha encontrado el servicio: '{invalid_path}'"
     obj = ServiceResult(data=None, type="ServiceNotFound", errs=errs)
     return jsonify(obj), 404

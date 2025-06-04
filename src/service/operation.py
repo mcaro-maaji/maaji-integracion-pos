@@ -43,7 +43,7 @@ class ServiceOperation(AbsServiceOperation):
                     if isinstance(param, ServiceOptParameter):
                         self.__param_args.append(param)
                     else:
-                        msg = "El parametro debe ser de tipo: 'ServiceOptParameter'"
+                        msg = "el parametro debe ser de tipo: 'ServiceOptParameter'"
                         raise ServiceParamError(msg)
             elif isinstance(params, ServiceOptReturn) and not params.func is None:
                 self.__param_return = params
@@ -51,12 +51,12 @@ class ServiceOperation(AbsServiceOperation):
                 msg = "{} de los parametros key-value deben ser de tipo: '{}'"
                 for key, value in params.items():
                     if not isinstance(key, str):
-                        raise ServiceParamError(msg.format("Las llaves", "string"))
+                        raise ServiceParamError(msg.format("las llaves", "string"))
                     if not isinstance(value, ServiceOptParameter):
-                        raise ServiceParamError(msg.format("Los valores", "ServiceOptParameter"))
+                        raise ServiceParamError(msg.format("los valores", "ServiceOptParameter"))
                 self.__param_kwargs.update(params)
             else:
-                raise ServiceParamError(f"Parametros no validos: '{params}'")
+                raise ServiceParamError(f"parametros no validos: '{params}'")
 
     @property
     def param_args(self):
@@ -88,7 +88,7 @@ class ServiceOperation(AbsServiceOperation):
                 try:
                     result_args.append(param.func(arg))
                 except Exception as err:
-                    msg = f"Ha ocurrido un error en el parametro '{param.name}', {err}"
+                    msg = f"ha ocurrido un error en el parametro '{param.name}', {err}"
                     raise ServiceParamError(msg) from err
             else:
                 result_args.append(None)
@@ -108,7 +108,7 @@ class ServiceOperation(AbsServiceOperation):
                 try:
                     result_kwargs[key] = param.func(arg)
                 except Exception as err:
-                    msg = f"Ha ocurrido un error en el parametro key-value '{param.name}', {err}"
+                    msg = f"ha ocurrido un error en el parametro key-value '{param.name}', {err}"
                     raise ServiceParamError(msg) from err
             else:
                 result_kwargs[key] = None
@@ -121,11 +121,11 @@ class ServiceOperation(AbsServiceOperation):
         try:
             result_return = self.param_return.func(return_arg)
         except Exception as err:
-            msg = f"Ha ocurrido un error en el return '{self.param_return.name}', {err}"
+            msg = f"ha ocurrido un error en el return '{self.param_return.name}', {err}"
             raise ServiceParamError(msg) from err
 
         if not is_service_result(result_return):
-            msg = f"El valor del return debe ser de tipo ServiceResult: '{self.param_return.name}'"
+            msg = f"el valor del return debe ser de tipo ServiceResult: '{self.param_return.name}'"
             raise ServiceParamError(msg)
 
         return result_return
@@ -156,14 +156,14 @@ class ServiceOperation(AbsServiceOperation):
             msg_required_arg = "missing a required argument: "
             if msg.startswith(msg_required_arg):
                 msg_param = msg[len(msg_required_arg):]
-                msg = f"El argumento es requerido en el parametro: {msg_param}"
+                msg = f"el argumento es requerido en el parametro: {msg_param}"
             raise ServiceParamError(msg) from err
 
         try:
             result = func(*bound.args, **bound.kwargs)
             return_arg = await result if iscoroutine(result) else result
         except Exception as err:
-            msg = f"Ha ocurrido un error en la ejeccion de la operacion '{self.name}', {err}"
+            msg = f"ha ocurrido un error en la ejeccion de la operacion '{self.name}', {err}"
             raise ServiceError(msg) from err
 
         result_return = self.exec_return(return_arg)

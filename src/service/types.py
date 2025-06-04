@@ -99,7 +99,7 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
     def paths(self, *, attr: str = None):
         """Busca los ServiceObj anidados y los devuelve como rutas, opcional los atributos."""
         if not attr is None and not hasattr(self, attr):
-            raise AttributeError(f"En el ServiceObj no se ha encontrado el attributo '{attr}'")
+            raise AttributeError(f"en el ServiceObj no se ha encontrado el attributo '{attr}'")
 
         def _collect_obj(current: ServiceObj, path: list[ServiceObj]):
             paths = [path]
@@ -155,7 +155,7 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
             item = self.get(*key)
             if not item is None:
                 return item
-        raise ServiceNotFound(f"No se ha encontrado el ServiceObj con la llave: '{key}'")
+        raise ServiceNotFound(f"no se ha encontrado el ServiceObj con la llave: '{key}'")
 
     def to_dict(self):
         """Devuleve un diccionario con las propiedades del servicio."""
@@ -195,14 +195,14 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
     # abstract method
     async def exec(self, params: ServiceParams = None) -> Never:
         """Ejecuta la funcion del ServiceObj, como metodo abstracto esto causa error por defecto."""
-        raise ServiceNotImplementedError("No existe una funcion implementada del servicio.")
+        raise ServiceNotImplementedError("no existe una funcion implementada del servicio.")
 
     async def run(self, params: ServiceParams = None) -> ServiceResult:
         """Corre el servicio si tiene una funcion implementada,
         sino lanza error: ServiceNotImplementedError."""
         try:
             if not is_service_params(params) and not params is None:
-                msg = "Los parametros del servicio son incorrectos, formato: "
+                msg = "los parametros del servicio son incorrectos, formato: "
                 msg += "{'parameters': [object, ...], 'parameters_kv': {'key': object, ...}}"
                 raise ServiceParamError(msg)
 

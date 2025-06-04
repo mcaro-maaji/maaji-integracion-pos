@@ -34,7 +34,7 @@ class ClientsPOS(Generic[_KP_co], Clients):
         """Establecer un nuevo DataFrame de clientes en el POS."""
 
         if not isinstance(value, DataFrame):
-            raise TypeError("El valor no es un tipo DataFrame.")
+            raise TypeError("el valor no es un tipo DataFrame.")
         self.__data_pos = value
 
     @property

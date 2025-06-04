@@ -155,11 +155,11 @@ async def _opt_fromfile(*,
                         uuid_mapfields: UUID = None):
 
     if not has_request_context():
-        raise ServiceError("No se ha leido la peticion correctamente.")
+        raise ServiceError("no se ha leido la peticion correctamente.")
 
     file = (await request.files).get("file")
     if not file:
-        raise ServiceError("No hay archivo en la peticion.")
+        raise ServiceError("no hay archivo en la peticion.")
 
     uuid = _opt_create(
         file,
@@ -195,7 +195,7 @@ def _opt_get(uuid_clients: UUID, /, from_pos: bool = True):
     try:
         clients = CLIENTS_DATASTORE[uuid_clients]
     except KeyError as err:
-        msg = "No se ha encontrado los datos de los clientes con el UUID proporcionado."
+        msg = "no se ha encontrado los datos de los clientes con el UUID proporcionado."
         raise KeyError(msg) from err
 
     if from_pos:

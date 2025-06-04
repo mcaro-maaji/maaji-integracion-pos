@@ -31,7 +31,7 @@ MSG_EXCEP_CLIENTS: dict[T_IDMSG, str] = {
 }
 
 MSG_WARN_CLIENTS: dict[T_IDMSG, str] = {
-    IDMSG.MAX_CLIENTS: f"Hay mas de '{WARNING_MAX_CLIENTS}' clientes, puede fallar la integracion.",
+    IDMSG.MAX_CLIENTS: f"hay mas de '{WARNING_MAX_CLIENTS}' clientes, puede fallar la integracion.",
     IDMSG.INCORRECT_FIELDS: "estos campos no son necesarios",
     ClientField.NOMBRERAZONSOCIAL: "se recomienda colocar el nombre al cliente",
     ClientField.NOMBRE2: "se recomienda colocar el segundo nombre al cliente",
