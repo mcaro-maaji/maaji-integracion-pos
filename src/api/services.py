@@ -2,8 +2,8 @@
 
 import json
 from quart import Blueprint, jsonify, request
-from service import SERVICES_GROUPS
-from service.types import ServiceObj, ServiceResult
+from service import SERVICES_GROUPS, ServiceObj
+from service.types import ServiceResult, is_service_params
 from .utils import HTTP_ALL_METHODS
 
 bp_services = Blueprint("services", __name__, url_prefix="/services")
@@ -28,19 +28,29 @@ def handle_get_services(service_obj: ServiceObj):
 
 async def handle_post_services(service_obj: ServiceObj):
     """Ejecuta los servicios y responde con los resultados."""
+
+    result = ServiceResult(data=None, type="ServiceParamError")
+
     if request.content_type.startswith("application/json"):
         service_params = await request.get_json()
     elif request.content_type.startswith("multipart/form-data"):
         payload = (await request.form).get("payload")
         service_params = json.loads(payload) if payload else {"parameters": []}
     else:
-        return jsonify({
-            "data": None,
-            "type": "ServiceParamError",
-            "errs": "no se ha cargado el payload de parametros del servicio."
-        })
+        result["errs"] = "no hay payload de parametros del servicio"
+        return jsonify(result)
 
-    result = await service_obj.run(service_params)
+    if not is_service_params(service_params):
+        result["errs"] = "el formato del payload no es valido"
+        return jsonify(result)
+
+    if "parameterskv" not in service_params:
+        service_params["parameterskv"] = {}
+
+    parameters = service_params["parameters"]
+    parameterskv = service_params["parameterskv"]
+
+    result = await service_obj.run(*parameters, **parameterskv)
     return jsonify(result)
 
 def handle_not_method_service(__route: str):
@@ -48,6 +58,7 @@ def handle_not_method_service(__route: str):
     name_service = ".".join(__route.split("/")[-2:])
     errs = f"el servicio '{name_service}' no permite el metodo HTTP: '{request.method}'"
     obj = ServiceResult(data=None, type="ServiceNotImplementedError", errs=errs)
+
     return jsonify(obj), 405
 
 async def handler_services(__route: str):
@@ -81,4 +92,5 @@ async def service_not_found(invalid_path):
     """Respuesta cuando no existe la ruta del servicio."""
     errs = f"no se ha encontrado el servicio: '{invalid_path}'"
     obj = ServiceResult(data=None, type="ServiceNotFound", errs=errs)
+
     return jsonify(obj), 404

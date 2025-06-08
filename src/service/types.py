@@ -9,31 +9,34 @@ from typing import (
     Optional,
     Generic,
     TypeVar,
+    ParamSpec,
     Union,
     Never,
     overload
 )
 
 T = TypeVar("T", bound="ServiceObj")
+P = ParamSpec("P")
+R = TypeVar("R")
 
 class ServiceParams(TypedDict):
     """Estructura para mapear los parametros de los servicios."""
     parameters: tuple[Any, ...] | list[Any]
-    parameters_kv: NotRequired[dict[str, Any]]
+    parameterskv: NotRequired[dict[str, Any]]
 
 def is_service_params(value) -> TypeGuard[ServiceParams]:
     """Comprueba que el valor sea de tipo ServiceParams."""
     if not isinstance(value, dict):
         return False
     has_params = "parameters" in value and isinstance(value["parameters"], (list, tuple))
-    has_params_kv = "parameters_kv" in value and isinstance(value["parameters_kv"], dict)
-    has_params_kv = has_params_kv and all(isinstance(k, str) for k in value["parameters_kv"])
-    has_params_kv = has_params_kv or "parameters_kv" not in value
+    has_params_kv = "parameterskv" in value and isinstance(value["parameterskv"], dict)
+    has_params_kv = has_params_kv and all(isinstance(k, str) for k in value["parameterskv"])
+    has_params_kv = has_params_kv or "parameterskv" not in value
     return has_params and has_params_kv
 
-class ServiceResult(TypedDict):
+class ServiceResult(Generic[R], TypedDict):
     """Estructura para devolver los datos al consultar el servicio."""
-    data: Any
+    data: R
     type: str
     errs: NotRequired[str]
 
@@ -60,14 +63,18 @@ class ServiceNotImplementedError(ServiceError):
     """Error para identificar un servicio sin una funcion implementada."""
 
 
-class ServiceObj(Generic[T], dict[str, T | list[T]]):
+class ServiceObj(Generic[T, P, R], dict[str, T | list[T]]):
     """Propiedades de estructura basicas para definir, agrupar, clasificar servicios."""
     __name: str
     __type: str
-    __func: Optional[Callable]
+    __func: Optional[Callable[P, R]]
     __desc: str
 
-    def __init__(self, *, name: str, type: str = "", func: Callable = None, desc: str = "",
+    def __init__(self, *,
+                 name: str,
+                 type: str = "",
+                 func: Callable[P, R] = None,
+                 desc: str = "",
                  **kwargs: T | list[T]):
         super().__init__(**kwargs)
         self.__name = name
@@ -174,6 +181,12 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
     def __repr__(self):
         return str(self)
 
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        func = self.func
+        if func and callable(func):
+            return func(*args, **kwargs)
+        raise ServiceNotImplementedError("no existe una funcion implementada del servicio.")
+
     def info(self) -> dict[str, Union["ServiceObj", list["ServiceObj"]]]:
         """Crea un diccionario que muestra informacion de los servicios, segun el grupo."""
         info = {}
@@ -193,21 +206,15 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
         return info
 
     # abstract method
-    async def exec(self, params: ServiceParams = None) -> Never:
+    async def exec(self, *args: P.args, **kwargs: P.kwargs) -> Never:
         """Ejecuta la funcion del ServiceObj, como metodo abstracto esto causa error por defecto."""
         raise ServiceNotImplementedError("no existe una funcion implementada del servicio.")
 
-    async def run(self, params: ServiceParams = None) -> ServiceResult:
+    async def run(self, *args: P.args, **kwargs: P.kwargs) -> ServiceResult[R]:
         """Corre el servicio si tiene una funcion implementada,
         sino lanza error: ServiceNotImplementedError."""
         try:
-            if not is_service_params(params) and not params is None:
-                msg = "los parametros del servicio son incorrectos, formato: "
-                msg += "{'parameters': [object, ...], 'parameters_kv': {'key': object, ...}}"
-                raise ServiceParamError(msg)
-
-            # return ServiceResult | Never
-            return await self.exec(params)
+            return await self.exec(*args, **kwargs)
         except ServiceError as err:
             msg = ", ".join(err.args)
             return {
@@ -216,21 +223,20 @@ class ServiceObj(Generic[T], dict[str, T | list[T]]):
                 "errs": msg
             }
 
-class ServiceOptParameter(ServiceObj):
+class ServiceOptParameter(Generic[P, R], ServiceObj[Any, P, R]):
     """Crea un parametro de operaciones de los servicios."""
 
-class ServiceOptReturn(ServiceOptParameter):
+class ServiceOptReturn(Generic[P, R], ServiceOptParameter[P, R]):
     """Crea un return en operaciones de los servicios."""
-    func: Callable[[Any], ServiceResult]
 
-class ServiceOperation(ServiceObj[ServiceOptParameter]):
+class ServiceOperation(Generic[P, R], ServiceObj[ServiceOptParameter, P, R]):
     """Crea una operacion de un servicio."""
 
-class Service(ServiceObj[ServiceOperation]):
-    """Crea un servicio."""
+class Service(ServiceObj[ServiceOperation, ..., Any]):
+    """Crea un grupo de operaciones de servicio."""
 
-class ServicesGroup(ServiceObj[Service]):
+class ServicesGroup(ServiceObj[Service, ..., Any]):
     """Crea un grupo de servicios."""
 
-class ServicesGroups(ServiceObj[ServicesGroup]):
+class ServicesGroups(ServiceObj[ServicesGroup, ..., Any]):
     """Crea un conjunto de grupos de servicios."""

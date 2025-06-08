@@ -1,13 +1,13 @@
 """Modulo de ejecucion principal"""
 
 import asyncio
-from app import server as app_server
+import app
 
 async def main():
     """Ejecuta el proyecto."""
 
     parallel_process = [
-        app_server
+        app.server(app.app, app.config_server)
     ]
 
     await asyncio.gather(*parallel_process)

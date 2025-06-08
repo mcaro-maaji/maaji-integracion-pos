@@ -1,170 +1,147 @@
 """Modulo para definir como se ejecutan las operaciones de los servicios."""
 
-from typing import Any
+from typing import TypeVar, ParamSpec, Generic, Callable, Coroutine, AsyncGenerator, Any
 from inspect import signature, iscoroutine
+from .parameters import ServiceOptParameter, ServiceOptReturn
 from .types import (
-    ServiceParams,
     ServiceResult,
-    is_service_result,
     ServiceError,
     ServiceParamError,
-    ServiceOptReturn,
-    ServiceOptParameter,
-    ServiceOperation as AbsServiceOperation,
+    ServiceOperation as _ServiceOperation,
 )
 
-def _return_default(_) -> ServiceResult:
-    return {
-        "data": None,
-        "type": "None"
-    }
+P = ParamSpec("P")
+R = TypeVar("R")
 
-return_default = ServiceOptReturn(
-    name="return",
-    type="{'data': None, 'type': string}",
-    func=_return_default
-)
+def _return_default(value):
+    """Devolucion de servicio con valor por defecto."""
 
-class ServiceOperation(AbsServiceOperation):
+    if isinstance(value, type):
+        type_name = value.__name__
+    else:
+        type_name = value.__class__.__name__
+
+    return ServiceResult({
+        "data": value,
+        "type": type_name
+    })
+
+return_default = ServiceOptReturn(_return_default, name="return_default")
+
+class ServiceOperation(Generic[P, R], _ServiceOperation[P, R]):
     """Crea una operacion de un servicio."""
-    __param_args: list[ServiceOptParameter] = None
-    __param_kwargs: dict[str, ServiceOptParameter] = None
-    __param_return: ServiceOptReturn = None
+    __func: Callable[P, R] | Callable[P, Coroutine[Any, Any, R]]
+    __parameters: tuple[ServiceOptParameter, ...]
+    __parameterskv: dict[str, ServiceOptParameter]
+    __opt_return: ServiceOptReturn[..., R]
 
-    def exec_lookup_params(self):
-        """Busca y organiza los parametros de la operacion."""
-        self.__param_args = []
-        self.__param_kwargs = {}
-        self.__param_return = return_default
+    def __init__(self,
+                 func: Callable[P, R] | Callable[P, Coroutine[Any, Any, R]],
+                 /,
+                 *parameters: ServiceOptParameter | ServiceOptReturn,
+                 name: str = None,
+                 type: str = "",
+                 desc: str = "",
+                 parameterskv: dict[str, ServiceOptParameter] = None):
+        name = name if name else func.__name__
+        if parameterskv is None:
+            parameterskv = {}
+        opt_return = [i for i in parameters if isinstance(i, ServiceOptReturn)]
+        parameters = [i for i in parameters if not isinstance(i, ServiceOptReturn)]
+        opt_return = return_default if not opt_return else opt_return[-1]
 
-        for params in self.values():
-            if isinstance(params, (list, tuple)):
-                for param in params:
-                    if isinstance(param, ServiceOptParameter):
-                        self.__param_args.append(param)
-                    else:
-                        msg = "el parametro debe ser de tipo: 'ServiceOptParameter'"
-                        raise ServiceParamError(msg)
-            elif isinstance(params, ServiceOptReturn) and not params.func is None:
-                self.__param_return = params
-            elif isinstance(params, dict):
-                msg = "{} de los parametros key-value deben ser de tipo: '{}'"
-                for key, value in params.items():
-                    if not isinstance(key, str):
-                        raise ServiceParamError(msg.format("las llaves", "string"))
-                    if not isinstance(value, ServiceOptParameter):
-                        raise ServiceParamError(msg.format("los valores", "ServiceOptParameter"))
-                self.__param_kwargs.update(params)
-            else:
-                raise ServiceParamError(f"parametros no validos: '{params}'")
+        params = {
+            "parameters": parameters,
+            "parameterskv": parameterskv,
+            "return": opt_return
+        }
+        super().__init__(name=name, type=type, func=func, desc=desc, **params)
+        self.__func = func
+        self.__sig = signature(func)
+        self.__parameters = tuple(parameters)
+        self.__parameterskv = parameterskv
+        self.__opt_return = opt_return
 
-    @property
-    def param_args(self):
-        """Contiene los parametros de la operacion."""
-        if self.__param_args is None:
-            self.exec_lookup_params()
-        return self.__param_args
-
-    @property
-    def param_kwargs(self):
-        """Contiene los parametros key-value de la operacion."""
-        if self.__param_kwargs is None:
-            self.exec_lookup_params()
-        return self.__param_kwargs
+        self.repr_params = ", ".join([f"{p.name}: {p.type}" for p in parameters])
+        self.repr_params = f"({self.repr_params})"
+        self.repr_paramskv = ", ".join([f"{k}: {p.type}" for k, p in parameterskv.items()])
+        self.repr_paramskv = f"({self.repr_paramskv})"
+        self.repr_return = opt_return.type
 
     @property
-    def param_return(self):
-        """Contiene el return de la operacion."""
-        if self.__param_return is None:
-            self.exec_lookup_params()
-        return self.__param_return
+    def func(self):
+        return self.__func
 
-    def exec_args(self, *args: Any):
-        """Ejecuta las funciones de los parametros."""
-        result_args = []
+    @property
+    def sig(self):
+        """Firma de la funcion de la operacion."""
+        return self.__sig
 
-        for arg, param in zip(args, self.param_args):
-            if not param.func is None:
-                try:
-                    result_args.append(param.func(arg))
-                except Exception as err:
-                    msg = f"ha ocurrido un error en el parametro '{param.name}', {err}"
-                    raise ServiceParamError(msg) from err
-            else:
-                result_args.append(None)
+    @property
+    def parameters(self):
+        """Parametros posicionales de la operacion del servicio."""
+        return self.__parameters
 
-        return tuple(result_args)
+    @property
+    def parameterskv(self):
+        """Parametros clave-valor de la operacion del servicio."""
+        return self.__parameterskv
 
-    def exec_kwargs(self, **kwargs: Any):
-        """Ejecuta las funciones de los parametros de tipo llave y valor."""
-        result_kwargs = {}
-        keys_kwargs = set(kwargs.keys()).intersection(self.param_kwargs.keys())
+    @property
+    def opt_return(self):
+        """Devolucion de la operacion del servicio."""
+        return self.__opt_return
+
+    async def exec_args(self, *args: P.args) -> AsyncGenerator[ServiceResult, None]:
+        """Executa el servicio de los parametros posicionales."""
+        for param, arg in zip(self.parameters, args):
+            try:
+                yield await param.run(arg)
+            except ServiceParamError as err:
+                msg = "se espera argumentos de los parametros posicionales"
+                msg += f": {self.repr_params}, {err}"
+                raise ServiceParamError(msg) from err
+
+    async def exec_kwargs(self, **kwargs: P.kwargs) -> AsyncGenerator[tuple[str, ServiceResult], None]:
+        """Executa el servicio de los parametros clave-valor."""
+        keys_kwargs = set(kwargs.keys()).intersection(self.parameterskv.keys())
 
         for key in keys_kwargs:
+            param = self.parameterskv[key]
             arg = kwargs[key]
-            param = self.param_kwargs[key]
 
-            if not param.func is None:
-                try:
-                    result_kwargs[key] = param.func(arg)
-                except Exception as err:
-                    msg = f"ha ocurrido un error en el parametro key-value '{param.name}', {err}"
-                    raise ServiceParamError(msg) from err
-            else:
-                result_kwargs[key] = None
+            try:
+                yield key, await param.run(arg)
+            except ServiceParamError as err:
+                msg = "se espera argumentos de los parametros clave-valor"
+                msg += f": {self.repr_paramskv}, {err}"
+                raise ServiceParamError(msg) from err
 
-        return result_kwargs
+    async def exec(self, *args: P.args, **kwargs: P.kwargs) -> ServiceResult[R]:
+        args = [arg["data"] async for arg in self.exec_args(*args)]
+        kwargs = {key: value["data"] async for key, value in self.exec_kwargs(**kwargs)}
 
-    def exec_return(self, return_arg: Any):
-        """Ejecuta la funcion del retorno de la operacion."""
-
-        try:
-            result_return = self.param_return.func(return_arg)
-        except Exception as err:
-            msg = f"ha ocurrido un error en el return '{self.param_return.name}', {err}"
-            raise ServiceParamError(msg) from err
-
-        if not is_service_result(result_return):
-            msg = f"el valor del return debe ser de tipo ServiceResult: '{self.param_return.name}'"
-            raise ServiceParamError(msg)
-
-        return result_return
-
-    async def exec(self, params: ServiceParams = None) -> ServiceResult:
-        if self.func is None:
-            super().exec(params)
-
-        self.exec_lookup_params()
-
-        if params is None:
-            args = tuple()
-            kwargs = {}
-        else:
-            args = params["parameters"]
-            kwargs = params.get("parameters_kv", {})
-
-        args = self.exec_args(*args)
-        kwargs = self.exec_kwargs(**kwargs)
-        func = self.func # property no callable Pylint(E1102:not-callable)
-        sig = signature(func)
+        func = self.func
+        len_args = len(self.parameters)
+        msgerr = f"ha ocurrido un error en la operacion '{self.name}'"
 
         try:
-            bound = sig.bind(*args, **kwargs)
+            bound = self.sig.bind(*args,  **kwargs)
             bound.apply_defaults()
         except TypeError as err:
-            msg = str(err)
-            msg_required_arg = "missing a required argument: "
-            if msg.startswith(msg_required_arg):
-                msg_param = msg[len(msg_required_arg):]
-                msg = f"el argumento es requerido en el parametro: {msg_param}"
-            raise ServiceParamError(msg) from err
+            if len(args) < len_args:
+                msgerr += f", se esperaban {len_args} argumentos posicionales"
+            else:
+                msgerr += ", " + str(err)
+
+            raise ServiceParamError(msgerr) from err
 
         try:
-            result = func(*bound.args, **bound.kwargs)
-            return_arg = await result if iscoroutine(result) else result
-        except Exception as err:
-            msg = f"ha ocurrido un error en la ejeccion de la operacion '{self.name}', {err}"
-            raise ServiceError(msg) from err
+            return_arg = func(*bound.args, **bound.kwargs)
+            if iscoroutine(return_arg):
+                return_arg = await return_arg
 
-        result_return = self.exec_return(return_arg)
-        return result_return
+            return await self.opt_return.run(return_arg)
+        except Exception as err:
+            msgerr += ", " + str(err)
+            raise ServiceError(msgerr) from err

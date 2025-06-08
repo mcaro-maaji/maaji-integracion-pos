@@ -1,48 +1,35 @@
-"""Modulo para tener un servicio MapField de los datos clientes."""
+"""Modulo para tener un servicio MapField de los datos ClientsPOS."""
 
-from datetime import timedelta
 from uuid import UUID
+from datetime import timedelta
 from core.clients import MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX
 from utils.mapfields import MapFields
 from utils.datastore import DataStore
-from service.types import Service
-from service.operation import ServiceOperation
-from service.params import param_key_uuid, return_list_uuid
-from .params import return_mapfields
+from service import common as c
+from service.decorator import services
+from service.mapfields import params, returns
 
-CLIENTS_MAPFIELDS: DataStore[MapFields] = DataStore(
+DS_MAPFIELDS_CLIENTS: DataStore[MapFields] = DataStore(
     max_length=7, # 5 sitios disponibles para crear MapFields y 2 por defecto.
     max_size=1,
     max_duration=timedelta(days=365*5)
 )
 
-CLIENTS_MAPFIELDS.extend(MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX)
+DS_MAPFIELDS_CLIENTS.extend(MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX)
 
-def _opt_getall():
-    return list(CLIENTS_MAPFIELDS.keys())
+@services.operation(c.params.index, c.returns.uuids)
+def getall(index: slice = None):
+    """Obtener todos los IDs de mapeo de campos (MapFields) de los clientes."""
+    if index is None:
+        index = slice(None, None)
+    return list(DS_MAPFIELDS_CLIENTS.keys())[index]
 
-params_getall = {
-    "parameters": [],
-    "return": return_list_uuid
-}
+@services.operation(params.idmapfields, returns.mapfields)
+def get(key: UUID):
+    """Obtener el mapeo de campos (MapFields) de los clientes con el ID."""
 
-opt_getall = ServiceOperation(name="getall", func=_opt_getall, **params_getall)
+    if key in DS_MAPFIELDS_CLIENTS:
+        return DS_MAPFIELDS_CLIENTS[key]
+    raise KeyError(f"no se encuentra el MapFields de Clientes con la llave UUID: '{key}'")
 
-def _opt_get(key: UUID):
-    if key in CLIENTS_MAPFIELDS:
-        return CLIENTS_MAPFIELDS[key]
-    raise KeyError(f"no se encuentra el MapFields de Clientes con la llave UUID: {key}")
-
-params_get = {
-    "parameters": [param_key_uuid],
-    "return": return_mapfields
-}
-
-opt_get = ServiceOperation(name="get", func=_opt_get, **params_get)
-
-operations = [
-    opt_getall,
-    opt_get
-]
-
-service = Service(name="mapfields_clients", operations=operations)
+service_clients = services.service("clients", getall, get)

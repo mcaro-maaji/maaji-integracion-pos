@@ -1,10 +1,10 @@
 """Modulo para parametrizar la aplicacion Web"""
 
-from pathlib import Path
 from quart import Quart
+from utils.constants import PATH_STATIC, PATH_TEMPLATES
 
 app = Quart(
     import_name="__main__",
-    static_folder="..\\static",
-    template_folder=Path.cwd() / "..\\templates"
+    static_folder=str(PATH_STATIC),
+    template_folder=str(PATH_TEMPLATES)
 )

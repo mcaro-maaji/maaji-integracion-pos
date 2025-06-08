@@ -1,214 +1,54 @@
 """Modulo para gestionar los datos en cache de los clientes."""
 
 from uuid import UUID
-from io import BytesIO
-from pathlib import Path
-from quart import request, has_request_context
-from core.clients import ClientsPOS, ClientsCegid, ClientsShopify
+from core.clients import ClientsPOS as _ClientsPOS, ClientsCegid, ClientsShopify
 from utils.datastore import DataStore
-from service.types import Service, ServiceError
-from service.operation import ServiceOperation
-from service.params import return_uuid, return_list_uuid
-from service.mapfields.clients import (
-    _opt_getall as mapfields_getall,
-    _opt_get as mapfields_get
-)
-from .params import (
-    param_pos,
-    param_fpath,
-    param_raw,
-    param_ftype,
-    param_delimeter,
-    param_encoding,
-    param_uuid_mapfields,
-    param_uuid_data,
-    param_from_pos,
-    return_clients_data
-)
+from utils.typing import FilePath, ReadBuffer, ReadCsvBuffer
+import service.mapfields.clients as mapfields_clients
 
-CLIENTS_DATASTORE: DataStore[ClientsPOS] = DataStore(
+DS_CLIENTS_POS: DataStore[_ClientsPOS] = DataStore(
     max_length=5,                         # 5 sitios disponibles para crear data Clients.
-    max_size=10 * 1e6,                    # 10 Megabytes.
+    max_size=20 * 1e6,                    # 20 Megabytes.
     # max_duration=timedelta(hours=1)     # 12 minutos cada item, total de 60 minutos.
 )
 
-def clients_datastore_calc_size(clients: ClientsPOS):
+def ds_clients_pos_calc_size(clients: _ClientsPOS):
     """Callback para calcular el tamaño de los datos de los clientes."""
     size = int(clients.data_pos.memory_usage(deep=True).sum())
     size += int(clients.data.memory_usage(deep=True).sum())
     return size
 
-CLIENTS_DATASTORE.calc_size = clients_datastore_calc_size
+DS_CLIENTS_POS.calc_size = ds_clients_pos_calc_size
 
-def _opt_create(fpath_or_buffer: Path | BytesIO,
-                /,
-                pos: str = "cegid",
-                ftype: str = "csv",
-                delimeter: str = "|",
-                encoding: str = "utf-8",
-                uuid_mapfields: UUID = None):
+def create(fpath_or_buffer: FilePath | ReadBuffer | ReadCsvBuffer,
+           /,
+           pos: str = "cegid",
+           ftype: str = "csv",
+           delimeter: str = "|",
+           encoding: str = "utf-8",
+           idmapfields: UUID = None):
+    """Crea una instancia de ClientsPOS y la guarda en un DataStore, devuelve el ID."""
 
-    if pos == "shopify":
-        uuid_mf_default = mapfields_getall()[1]
-        CreateData = ClientsShopify
+    if pos == "cegid":
+        ClientsPOS = ClientsCegid
+        default_idmapfields = mapfields_clients.getall()[0]
+    elif pos == "shopify":
+        ClientsPOS = ClientsShopify
+        default_idmapfields = mapfields_clients.getall()[1]
     else:
-        uuid_mf_default = mapfields_getall()[0]
-        CreateData = ClientsCegid
+        raise ValueError("no se ha seleccionado un POS valido.")
 
-    if uuid_mapfields is None:
-        uuid_mapfields = uuid_mf_default
+    if idmapfields is None:
+        idmapfields = default_idmapfields
 
-    mapfields = mapfields_get(uuid_mapfields)
-    data = CreateData(
+    mapfields = mapfields_clients.get(idmapfields)
+    data = ClientsPOS(
         fpath_or_buffer,
         ftype=ftype,
         delimiter=delimeter,
         encoding=encoding,
         mapfields=mapfields
     )
-    uuid = CLIENTS_DATASTORE.append(data)
+
+    uuid = DS_CLIENTS_POS.append(data)
     return uuid
-
-params_fromraw = {
-    "parameters": [param_raw],
-    "parameters_kv": {
-        "pos": param_pos,
-        "ftype": param_ftype,
-        "delimeter": param_delimeter,
-        "encoding": param_encoding,
-        "uuid_mapfields": param_uuid_mapfields
-    },
-    "return": return_uuid
-}
-
-def _opt_fromraw(raw: str,
-                 /,
-                 pos: str = "cegid",
-                 ftype: str = "csv",
-                 delimeter: str = "|",
-                 encoding: str = "utf-8",
-                 uuid_mapfields: UUID = None):
-
-    raw_bytes = raw.encode(encoding)
-    buffer = BytesIO(raw_bytes)
-    uuid = _opt_create(
-        buffer,
-        pos=pos,
-        ftype=ftype,
-        delimeter=delimeter,
-        encoding=encoding,
-        uuid_mapfields=uuid_mapfields
-    )
-    return uuid
-
-opt_fromraw = ServiceOperation(name="fromraw", func=_opt_fromraw, **params_fromraw)
-
-params_frompath = {
-    "parameters": [param_fpath],
-    "parameters_kv": {
-        "pos": param_pos,
-        "ftype": param_ftype,
-        "delimeter": param_delimeter,
-        "encoding": param_encoding,
-        "uuid_mapfields": param_uuid_mapfields
-    },
-    "return": return_uuid
-}
-
-def _opt_frompath(fpath: Path,
-                  /,
-                  pos: str = "cegid",
-                  ftype: str = "csv",
-                  delimeter: str = "|",
-                  encoding: str = "utf-8",
-                  uuid_mapfields: UUID = None):
-
-    uuid = _opt_create(
-        fpath,
-        pos=pos,
-        ftype=ftype,
-        delimeter=delimeter,
-        encoding=encoding,
-        uuid_mapfields=uuid_mapfields
-    )
-    return uuid
-
-opt_frompath = ServiceOperation(name="frompath", func=_opt_frompath, **params_frompath)
-
-params_fromfile = {
-    "parameters": [],
-    "parameters_kv": {
-        "pos": param_pos,
-        "ftype": param_ftype,
-        "delimeter": param_delimeter,
-        "encoding": param_encoding,
-        "uuid_mapfields": param_uuid_mapfields
-    },
-    "return": return_uuid
-}
-
-async def _opt_fromfile(*,
-                        pos: str = "cegid",
-                        ftype: str = "csv",
-                        delimeter: str = "|",
-                        encoding: str = "utf-8",
-                        uuid_mapfields: UUID = None):
-
-    if not has_request_context():
-        raise ServiceError("no se ha leido la peticion correctamente.")
-
-    file = (await request.files).get("file")
-    if not file:
-        raise ServiceError("no hay archivo en la peticion.")
-
-    uuid = _opt_create(
-        file,
-        pos=pos,
-        ftype=ftype,
-        delimeter=delimeter,
-        encoding=encoding,
-        uuid_mapfields=uuid_mapfields
-    )
-    return uuid
-
-opt_fromfile = ServiceOperation(name="fromfile", func=_opt_fromfile, **params_fromfile)
-
-params_getall = {
-    "parameters": [],
-    "return": return_list_uuid
-}
-
-def _opt_getall():
-    return list(CLIENTS_DATASTORE.keys())
-
-opt_getall = ServiceOperation(name="getall", func=_opt_getall, **params_getall)
-
-params_get = {
-    "parameters": [param_uuid_data],
-    "parameters_kv": {
-        "from_pos": param_from_pos
-    },
-    "return": return_clients_data
-}
-
-def _opt_get(uuid_clients: UUID, /, from_pos: bool = True):
-    try:
-        clients = CLIENTS_DATASTORE[uuid_clients]
-    except KeyError as err:
-        msg = "no se ha encontrado los datos de los clientes con el UUID proporcionado."
-        raise KeyError(msg) from err
-
-    if from_pos:
-        return clients.data_pos.to_dict("split")
-    return clients.data.to_dict("split")
-
-opt_get = ServiceOperation(name="get", func=_opt_get, **params_get)
-
-operations = [
-    opt_fromraw,
-    opt_fromfile,
-    opt_getall,
-    opt_get
-]
-
-service = Service(name="clients_data", operations=operations)

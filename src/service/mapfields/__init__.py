@@ -3,16 +3,11 @@
 __version__ = "1.0.0"
 
 __all__ = [
-    "mapfields_clients_service",
-    "mapfields_services",
-    "mapfields_servicesgroup"
+    "service_clients",
+    "group_mapfields",
 ]
 
-from service.types import ServicesGroup
-from .clients import service as mapfields_clients_service
+from service.decorator import services
+from .clients import service_clients
 
-mapfields_services = [
-    mapfields_clients_service
-]
-
-mapfields_servicesgroup = ServicesGroup(name="mapfields_group", services=mapfields_services)
+group_mapfields = services.group("mapfields", service_clients)

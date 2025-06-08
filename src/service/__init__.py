@@ -4,31 +4,26 @@ __version__ = "1.0.0"
 
 __all__ = [
     "ServiceObj",
-    "ServiceOptParameter",
-    "ServiceOptReturn",
-    "AbsServiceOperation",
-    "ServiceOperation",
     "Service",
     "ServicesGroup",
-    "ServicesGroups"
+    "ServicesGroups",
+    "ServiceOptParameter",
+    "ServiceOptReturn",
+    "ServiceOperation",
+    "services",
+    "SERVICES_GROUPS"
 ]
 
 from .types import (
     ServiceObj,
-    ServiceOptParameter,
-    ServiceOptReturn,
-    ServiceOperation as AbsServiceOperation,
     Service,
     ServicesGroup,
     ServicesGroups
 )
+from .parameters import ServiceOptParameter, ServiceOptReturn
 from .operation import ServiceOperation
-from .mapfields import mapfields_servicesgroup
-from .clients import clients_servicesgroup
+from .decorator import services
+from .mapfields import group_mapfields
+from .clients import group_clients
 
-services_groups = [
-    mapfields_servicesgroup,
-    clients_servicesgroup
-]
-
-SERVICES_GROUPS = ServicesGroups(name="services_groups", services_groups=services_groups)
+SERVICES_GROUPS = services.groups("groups", group_mapfields, group_clients)

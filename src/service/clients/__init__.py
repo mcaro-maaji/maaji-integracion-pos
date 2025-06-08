@@ -3,16 +3,12 @@
 __version__ = "1.0.0"
 
 __all__ = [
-    "clients_data_service",
-    "clients_services",
-    "clients_servicesgroup"
+    "service_cegid",
+    "group_clients",
 ]
 
-from service.types import ServicesGroup
-from .data import service as clients_data_service
+from service.decorator import services
+from .cegid import service_cegid
+from .shopify import service_shopify
 
-clients_services = [
-    clients_data_service
-]
-
-clients_servicesgroup = ServicesGroup(name="clients_group", services=clients_services)
+group_clients = services.group("clients", service_cegid, service_shopify)

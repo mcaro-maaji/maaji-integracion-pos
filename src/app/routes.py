@@ -1,19 +1,14 @@
-"""Modulo para establecer las rutas de la web."""
+"""Modulo para establecer las rutas de la aplicacion."""
 
-from quart import render_template
+from quart import redirect
 from api import bp_api
+from .pages import bp_pages
 from .app import app
 
+app.register_blueprint(bp_pages)
 app.register_blueprint(bp_api)
 
 @app.route("/")
-async def home():
+async def pages():
     """Pagina principal"""
-    return await render_template("pages/home.html")
-
-@app.route("/clients/cegid")
-async def tool_clients_cegid():
-    """Pagina para utilizar la herramienta de gestion clientes de CEGID Y2"""
-    columns = [{"title": "nombre", "field": "nombre"}]
-    data = [{"nombre": "julieta"}, {"nombre": "isabel"}]
-    return await render_template("pages/tool_clients_cegid.html", data=data, columns=columns)
+    return redirect("home")
