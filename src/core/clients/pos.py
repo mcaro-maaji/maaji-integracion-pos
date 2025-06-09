@@ -1,15 +1,17 @@
 """Modulo para organizar la inforamcion de los clientes segun el Sistema POS."""
 
-from typing import Literal, Generic
+from typing import Literal, TypeVar, Generic
 from pandas import DataFrame, ExcelFile, Series, Index, MultiIndex
-from utils.mapfields import MapFields, _KP_co
+from core.mapfields import MapFields
 from utils.typing import FilePath, ReadBuffer, ReadCsvBuffer
 from .clients import Clients
 from .fields import ClientField
 
-class ClientsPOS(Generic[_KP_co], Clients):
+_K_co = TypeVar("_K_co", bound=str, covariant=True) # key primary
+
+class ClientsPOS(Generic[_K_co], Clients):
     """Clientes que se manejan segun el sistema pos."""
-    __mapfields: MapFields[_KP_co, ClientField]
+    __mapfields: MapFields[_K_co, ClientField]
     __data_pos: DataFrame
 
     def __init__(self,
@@ -18,7 +20,7 @@ class ClientsPOS(Generic[_KP_co], Clients):
                  ftype: Literal["excel", "csv", "json"] = "csv",
                  delimiter="|",
                  encoding="utf-8",
-                 mapfields: MapFields[_KP_co, ClientField]):
+                 mapfields: MapFields[_K_co, ClientField]):
         super().__init__(filepath_or_buffer, ftype=ftype, delimiter=delimiter, encoding=encoding)
         self.__mapfields = mapfields
         self.__data_pos = self.data.copy()
@@ -42,7 +44,7 @@ class ClientsPOS(Generic[_KP_co], Clients):
         """Mapeo de los campos y homolacion de los datos."""
         return self.__mapfields
 
-    def no_match_fields(self) -> set[tuple[_KP_co, ClientField]]:
+    def no_match_fields(self) -> set[tuple[_K_co, ClientField]]:
         mapfields = super().no_match_fields()
         set_fields = set()
 
@@ -58,13 +60,13 @@ class ClientsPOS(Generic[_KP_co], Clients):
         incorrect_list = [i for i in self.data_pos if i not in self.mapfields.fields_1]
         return set(incorrect_list)
 
-    def sort_fields(self, fields: set[_KP_co] = None):
+    def sort_fields(self, fields: set[_K_co] = None):
         map_fields = fields if fields else set(str(mf) for mf in self.mapfields.fields_1)
         map_fields = list(map_fields)
         self.data_pos = self.data_pos[map_fields]
         super().sort_fields()
 
-    def fix(self, data: dict[tuple[_KP_co, ClientField], Series]):
+    def fix(self, data: dict[tuple[_K_co, ClientField], Series]):
         data_fields = {k[0]: v for k, v in data.items()}
         data_mapfields: dict[ClientField, Series] = {}
 
@@ -83,7 +85,7 @@ class ClientsPOS(Generic[_KP_co], Clients):
         self.data_pos = self.data_pos.fillna("")
         super().normalize()
 
-    def analyze(self) -> dict[tuple[_KP_co, ClientField], Index | MultiIndex]:
+    def analyze(self) -> dict[tuple[_K_co, ClientField], Index | MultiIndex]:
         analysis = super().analyze()
         analysis_pos = {}
 
@@ -96,13 +98,13 @@ class ClientsPOS(Generic[_KP_co], Clients):
 
         return analysis_pos
 
-    def autofix(self, analysis: dict[tuple[_KP_co, ClientField], Index | MultiIndex]):
+    def autofix(self, analysis: dict[tuple[_K_co, ClientField], Index | MultiIndex]):
         # NO autofix client data pos
         # autofix client data
         super_analysis = {mapfield: v for (_, mapfield), v in analysis.items()}
         super().autofix(super_analysis)
 
-    def mapdata(self, mapfields: set[tuple[_KP_co, ClientField]]):
+    def mapdata(self, mapfields: set[tuple[_K_co, ClientField]]):
         """Toma los datos de los campos principales y los mapea en los campos que relaciona."""
         data = {}
 
@@ -112,11 +114,11 @@ class ClientsPOS(Generic[_KP_co], Clients):
 
         self.fix(data)
 
-    def fullfix(self) -> dict[tuple[_KP_co, ClientField], Index | MultiIndex]:
+    def fullfix(self) -> dict[tuple[_K_co, ClientField], Index | MultiIndex]:
         self.normalize() # crea los campos que no existen para el mapeo.
         self.mapdata(self.mapfields)
         return super().fullfix()
 
-    def exceptions(self, analysis: dict[tuple[_KP_co, ClientField], Index | MultiIndex]):
+    def exceptions(self, analysis: dict[tuple[_K_co, ClientField], Index | MultiIndex]):
         analysis_mapfields = {mapfields[1]: v for mapfields, v in analysis.items()}
         return super().exceptions(analysis_mapfields)

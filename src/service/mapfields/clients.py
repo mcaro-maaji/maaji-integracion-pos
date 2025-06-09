@@ -3,8 +3,8 @@
 from uuid import UUID
 from datetime import timedelta
 from core.clients import MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX
-from utils.mapfields import MapFields
-from utils.datastore import DataStore
+from core.mapfields import MapFields
+from db.datastore import DataStore
 from service import common as c
 from service.decorator import services
 from service.mapfields import params, returns
@@ -15,7 +15,8 @@ DS_MAPFIELDS_CLIENTS: DataStore[MapFields] = DataStore(
     max_duration=timedelta(days=365*5)
 )
 
-DS_MAPFIELDS_CLIENTS.extend(MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX)
+default_mapfields = DS_MAPFIELDS_CLIENTS.extend(MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX)
+DS_MAPFIELDS_CLIENTS.persistent.extend(default_mapfields)
 
 @services.operation(c.params.index, c.returns.uuids)
 def getall(index: slice = None):

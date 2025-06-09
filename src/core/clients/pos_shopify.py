@@ -4,10 +4,10 @@ from typing import LiteralString
 from io import StringIO
 from datetime import datetime
 from pandas import DataFrame
+from core.mapfields import MapFields
 from utils.json import from_json
 from utils.dataclass import dict_to_dtcls
 from utils.typing import FilePath, ReadBuffer
-from utils.mapfields import MapFields
 from .pos import ClientsPOS
 from .fields import (
     ClientField as CF, ClientFieldShopifyMx as CFSM,

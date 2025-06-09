@@ -1,6 +1,6 @@
 """Modulo para organizar la inforamcion de los clientes segun el Sistema POS de CEGID Y2 Retail."""
 
-from utils.mapfields import MapFields
+from core.mapfields import MapFields
 from .pos import ClientsPOS
 from .fields import ClientField
 

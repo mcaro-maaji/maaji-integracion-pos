@@ -1,15 +1,16 @@
 """Modulo para gestionar los datos en cache de los clientes."""
 
 from uuid import UUID
+from datetime import timedelta
 from core.clients import ClientsPOS as _ClientsPOS, ClientsCegid, ClientsShopify
-from utils.datastore import DataStore
+from db.datastore import DataStore
 from utils.typing import FilePath, ReadBuffer, ReadCsvBuffer
 import service.mapfields.clients as mapfields_clients
 
 DS_CLIENTS_POS: DataStore[_ClientsPOS] = DataStore(
-    max_length=5,                         # 5 sitios disponibles para crear data Clients.
-    max_size=20 * 1e6,                    # 20 Megabytes.
-    # max_duration=timedelta(hours=1)     # 12 minutos cada item, total de 60 minutos.
+    max_length=7,                         # 7 sitios disponibles para crear data Clients.
+    max_size=30 * 1e6,                    # 30 Megabytes.
+    max_duration=timedelta(minutes=70)    # 10 minutos cada item
 )
 
 def ds_clients_pos_calc_size(clients: _ClientsPOS):

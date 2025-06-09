@@ -1,8 +1,21 @@
 """Modulo para crear el servidor que ejecuta la aplicacion."""
 
+from asyncio import CancelledError
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
+from quart import Quart
+from lifecycle import stop_event
 
 config_server = Config()
 config_server.bind = ["127.0.0.1:5585"]
-server = serve
+
+async def shutdown_trigger():
+    await stop_event.wait()
+
+async def server(app: Quart, config: Config):
+    """Ejecuta el servidor de la aplicacion."""
+    
+    try:
+        await serve(app, config, shutdown_trigger=shutdown_trigger)
+    except CancelledError:
+        print("Log: App Server cancelado.")

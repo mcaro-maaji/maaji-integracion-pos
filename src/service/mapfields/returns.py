@@ -2,7 +2,7 @@
 
 from service.types import ServiceResult
 from service.decorator import services
-from utils.mapfields import MapFields
+from core.mapfields import MapFields
 
 @services.opt_return(type="[[string, string], ...]")
 def mapfields(value: MapFields):
