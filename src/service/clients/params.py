@@ -22,3 +22,8 @@ def dataid(value: str | UUID):
 def converted(value: bool = False):
     """Parametro para escoger si data de clientes son los convertidos o no por MapFields."""
     return params.boolean(value)
+
+@services.parameter(type="boolean")
+def force(value: bool = False):
+    """Parametro para forzar la creacion de los datos de los clientes, hace espacio en memoria."""
+    return params.boolean(value)

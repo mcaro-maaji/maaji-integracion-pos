@@ -17,6 +17,7 @@ from service.clients import data, params, returns
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
     idmapfields=mf_params.idmapfields,
+    force=params.force
 )
 def fromraw(raw: str,
             /,
@@ -24,7 +25,8 @@ def fromraw(raw: str,
             ftype="csv",
             delimeter="|",
             encoding="utf-8",
-            idmapfields: UUID = None):
+            idmapfields: UUID = None,
+            force=False):
     """Crea los datos de los clientes CEGID por medio de un string."""
     raw_bytes = raw.encode(encoding)
     buffer = BytesIO(raw_bytes)
@@ -34,7 +36,8 @@ def fromraw(raw: str,
         ftype=ftype,
         delimeter=delimeter,
         encoding=encoding,
-        idmapfields=idmapfields
+        idmapfields=idmapfields,
+        force=force
     )
     return uuid
 
@@ -45,6 +48,7 @@ def fromraw(raw: str,
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
     idmapfields=mf_params.idmapfields,
+    force=params.force
 )
 def frompath(fpath: FilePath,
              /,
@@ -52,7 +56,8 @@ def frompath(fpath: FilePath,
              ftype="csv",
              delimeter="|",
              encoding="utf-8",
-             idmapfields: UUID = None):
+             idmapfields: UUID = None,
+             force=False):
     """Crea los datos de los clientes CEGID por medio de un ruta (path)."""
     uuid = data.create(
         fpath,
@@ -60,7 +65,8 @@ def frompath(fpath: FilePath,
         ftype=ftype,
         delimeter=delimeter,
         encoding=encoding,
-        idmapfields=idmapfields
+        idmapfields=idmapfields,
+        force=force
     )
     return uuid
 
@@ -70,13 +76,15 @@ def frompath(fpath: FilePath,
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
     idmapfields=mf_params.idmapfields,
+    force=params.force
 )
 async def fromfile(*,
                    pos="cegid",
                    ftype="csv",
                    delimeter="|",
                    encoding="utf-8",
-                   idmapfields: UUID = None):
+                   idmapfields: UUID = None,
+                   force=False):
     """Crea los datos de los clientes CEGID por medio de un archivo."""
     if not has_request_context():
         raise ServiceError("no se ha leido la peticion al servicio correctamente")
@@ -91,7 +99,8 @@ async def fromfile(*,
         ftype=ftype,
         delimeter=delimeter,
         encoding=encoding,
-        idmapfields=idmapfields
+        idmapfields=idmapfields,
+        force=force
     )
     return uuid
 
