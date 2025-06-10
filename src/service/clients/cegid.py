@@ -111,6 +111,14 @@ def getall(index: slice = None):
         index = slice(None, None)
     return list(data.DS_CLIENTS_POS.keys())[index]
 
+def _datafromid(dataid: UUID, /):
+    try:
+        clients = data.DS_CLIENTS_POS[dataid]
+    except KeyError as err:
+        msg = "no se ha encontrado los datos de los clientes con el UUID proporcionado."
+        raise KeyError(msg) from err
+    return clients
+
 @services.operation(
     params.dataid,
     returns.datajson,
@@ -119,12 +127,28 @@ def getall(index: slice = None):
 )
 def get(dataid: UUID, /, converted: bool = False, orientjson: c.params.JsonFrameOrient = "records"):
     """Obtener los datos de los clientes CEGID mediante el ID."""
-    try:
-        clients = data.DS_CLIENTS_POS[dataid]
-    except KeyError as err:
-        msg = "no se ha encontrado los datos de los clientes con el UUID proporcionado."
-        raise KeyError(msg) from err
-
+    clients = _datafromid(dataid)
     return clients, converted, orientjson
 
-service_cegid = services.service("cegid", fromraw, frompath, fromfile, getall, get)
+@services.operation(
+    params.indices,
+    c.returns.exitstatus,
+    dataid=params.dataid,
+    axis=c.params.axis
+)
+def drop(indices: list[str] | list[int], dataid: UUID, axis: str = "rows"):
+    """Elimina toda la informacion de los clientes"""
+    clients = _datafromid(dataid)
+    num_axis = 1 if axis == "columns" else 0
+    clients.data.drop(indices, axis=num_axis, inplace=True, errors="ignore")
+    clients.data_pos.drop(indices, axis=num_axis, inplace=True, errors="ignore")
+    return clients
+
+@services.operation(params.dataid, c.returns.exitstatus)
+def pop(dataid: UUID, /):
+    """Elimina la data de los clientes segun el ID."""
+    _datafromid(dataid)
+    data.DS_CLIENTS_POS.pop(dataid)
+    return 0
+
+service_cegid = services.service("cegid", fromraw, frompath, fromfile, getall, get, drop, pop)

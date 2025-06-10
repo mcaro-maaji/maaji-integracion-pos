@@ -33,3 +33,15 @@ def uuids(value: list[UUID]):
         "data": [str(item) for item in value],
         "type": "[string[UUID], ...]"
     })
+
+@services.opt_return(type="ExitStatus[number]")
+def exitstatus(value: int):
+    """Devolucion de servicio que indica el estado devuelto de la operacion con un numero."""
+    if isinstance(value, int):
+        status = value
+    else:
+        status = int(not bool(value))
+    return ServiceResult({
+        "data": status,
+        "type": "ExitStatus[number]"
+    })

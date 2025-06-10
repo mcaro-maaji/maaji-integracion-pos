@@ -34,7 +34,7 @@ def uuid(value: str | UUID):
     raise TypeError("el valor debe ser de un tipo string | UUID.")
 
 @services.parameter(type="end | [start, end, step]")
-def index(value: tuple[int] | int):
+def index(value: int | tuple[int, int, int]):
     """Parametro que recibe un listado que componen un indice."""
     if isinstance(value, (tuple, list)) and all(isinstance(i, int) for i in value[:3]):
         return slice(*value[:3])
@@ -91,3 +91,17 @@ def orientjson(value: JsonFrameOrient):
     if value in ["split", "records", "index", "columns", "values", "table"]:
         return value
     raise ValueError("el valor debe ser de tipo JsonFrameOrient.")
+
+@services.parameter(type="'columns'|'rows'")
+def axis(value: Literal["columns", "rows"]):
+    """Parametro que indica el tipo de axis, si son columnas o filas en un objecto tipo tabla."""
+    if value in ["columns", "rows"]:
+        return value
+    raise ValueError("el valor debe ser de tipo string ['columns'|'rows']")
+
+@services.parameter(type="ArrayList")
+def arraylist(value: list):
+    """Parametro que comprueba si el valor de tipo ArrayList"""
+    if isinstance(value, (list, tuple)):
+        return value
+    raise TypeError("el valor debe ser de tipo ArrayList.")

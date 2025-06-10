@@ -27,3 +27,13 @@ def converted(value: bool = False):
 def force(value: bool = False):
     """Parametro para forzar la creacion de los datos de los clientes, hace espacio en memoria."""
     return params.boolean(value)
+
+@services.parameter(type="string[] | number[]")
+def indices(value: list[str] | list[int]):
+    """Parametro que verifica que el valor es tipo ArrayList con valores tipo string o number."""
+    value = params.arraylist(value)
+    contain_str_or_int = all(isinstance(i, (str, int)) for i in value)
+    if contain_str_or_int:
+        return value
+    raise TypeError("el valor arraylist debe contener valores tipo string o number.")
+    
