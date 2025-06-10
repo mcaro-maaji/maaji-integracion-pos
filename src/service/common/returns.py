@@ -3,6 +3,12 @@
 from uuid import UUID
 from service.types import ServiceResult
 from service.decorator import services
+from service.operation import opt_return_default as _default
+
+@services.opt_return(type="type[object]")
+def default(value: object):
+    """Devolucion de servicio con el valor dado por la ejecucion de la operacion."""
+    return _default(value)
 
 @services.opt_return(type="None")
 def none(_):

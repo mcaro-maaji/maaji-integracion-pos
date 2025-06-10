@@ -13,8 +13,8 @@ from .types import (
 P = ParamSpec("P")
 R = TypeVar("R")
 
-def _return_default(value):
-    """Devolucion de servicio con valor por defecto."""
+def _opt_return_default(value):
+    """Devolucion de servicio con el valor dado por la funcion del objecto ServiceOperacion."""
 
     if isinstance(value, type):
         type_name = value.__name__
@@ -26,7 +26,7 @@ def _return_default(value):
         "type": type_name
     })
 
-return_default = ServiceOptReturn(_return_default, name="return_default")
+opt_return_default = ServiceOptReturn(_opt_return_default, name="default", type="type[object]")
 
 class ServiceOperation(Generic[P, R], _ServiceOperation[P, R]):
     """Crea una operacion de un servicio."""
@@ -48,7 +48,7 @@ class ServiceOperation(Generic[P, R], _ServiceOperation[P, R]):
             parameterskv = {}
         opt_return = [i for i in parameters if isinstance(i, ServiceOptReturn)]
         parameters = [i for i in parameters if not isinstance(i, ServiceOptReturn)]
-        opt_return = return_default if not opt_return else opt_return[-1]
+        opt_return = opt_return_default if not opt_return else opt_return[-1]
 
         params = {
             "parameters": parameters,
