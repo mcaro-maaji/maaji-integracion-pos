@@ -2,14 +2,20 @@
 
 from uuid import UUID
 from datetime import timedelta
-from core.clients import ClientsPOS as _ClientsPOS, ClientsCegid, ClientsShopify
 from db.datastore import DataStore
 from utils.typing import FilePath, ReadBuffer, ReadCsvBuffer
-import service.mapfields.clients as mapfields_clients
+from service.mapfields.clients import get as get_mapfields
+from core.clients import (
+    ClientsPOS as _ClientsPOS,
+    ClientsCegid,
+    ClientsShopify,
+    MAPFIELDS_POS_CEGID,
+    MAPFIELDS_POS_SHOPIFY_MX
+)
 
 DS_CLIENTS_POS: DataStore[_ClientsPOS] = DataStore(
     max_length=7,                         # 7 sitios disponibles para crear data Clients.
-    max_size=30 * 1e6,                    # 30 Megabytes.
+    max_size=35 * 1e6,                    # 35 Megabytes.
     max_duration=timedelta(minutes=70)    # 10 minutos cada item
 )
 
@@ -27,22 +33,24 @@ def create(fpath_or_buffer: FilePath | ReadBuffer | ReadCsvBuffer,
            ftype: str = "csv",
            delimeter: str = "|",
            encoding: str = "utf-8",
-           idmapfields: UUID = None):
+           idmapfields: UUID = None,
+           force: bool = False):
     """Crea una instancia de ClientsPOS y la guarda en un DataStore, devuelve el ID."""
 
     if pos == "cegid":
         ClientsPOS = ClientsCegid
-        default_idmapfields = mapfields_clients.getall()[0]
+        default_mapfields = MAPFIELDS_POS_CEGID
     elif pos == "shopify":
         ClientsPOS = ClientsShopify
-        default_idmapfields = mapfields_clients.getall()[1]
+        default_mapfields = MAPFIELDS_POS_SHOPIFY_MX
     else:
         raise ValueError("no se ha seleccionado un POS valido.")
 
-    if idmapfields is None:
-        idmapfields = default_idmapfields
+    if not idmapfields is None:
+        mapfields = get_mapfields(idmapfields)
+    else:
+        mapfields = default_mapfields
 
-    mapfields = mapfields_clients.get(idmapfields)
     data = ClientsPOS(
         fpath_or_buffer,
         ftype=ftype,
@@ -51,5 +59,5 @@ def create(fpath_or_buffer: FilePath | ReadBuffer | ReadCsvBuffer,
         mapfields=mapfields
     )
 
-    uuid = DS_CLIENTS_POS.append(data)
+    uuid = DS_CLIENTS_POS.append(data, force=force)
     return uuid
