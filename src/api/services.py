@@ -3,7 +3,7 @@
 import json
 from quart import Blueprint, jsonify, request
 from service import SERVICES_GROUPS, ServiceObj
-from service.types import ServiceResult, is_service_params
+from service.types import ServiceResult, is_service_params, ServiceParamError
 from .utils import HTTP_ALL_METHODS
 
 bp_services = Blueprint("services", __name__, url_prefix="/services")
@@ -26,32 +26,50 @@ def handle_get_services(service_obj: ServiceObj):
     """Responde con la informacion del servicio."""
     return jsonify(service_obj.info())
 
-async def handle_post_services(service_obj: ServiceObj):
-    """Ejecuta los servicios y responde con los resultados."""
+async def get_service_params():
+    """Obtiene los parametros de los servicios dependiendo del tipo de peticion."""
+    content_type = request.content_type or "application/json"
+    msgerr = "error al decodificar el json de los parametros del servicio"
 
-    result = ServiceResult(data=None, type="ServiceParamError")
+    if content_type.startswith("application/json"):
+        service_params = await request.get_json(force=True, silent=True)
+        if service_params is None:
+            raise ServiceParamError(msgerr)
+        if not service_params:
+            service_params = {"parameters": []}
+    elif content_type.startswith("multipart/form-data"):
+        form = await request.form
+        payload_parameters = form.get("payload.parameters") or "[]"
+        payload_parameterskv = form.get("payload.parameterskv") or "{}"
+        payload = "{" + """
+            "parameters": {},
+            "parameterskv": {}
+        """.format(payload_parameters, payload_parameterskv) + "}"
 
-    if request.content_type.startswith("application/json"):
-        service_params = await request.get_json()
-    elif request.content_type.startswith("multipart/form-data"):
-        payload = (await request.form).get("payload")
-        service_params = json.loads(payload) if payload else {"parameters": []}
+        try:
+            service_params = json.loads(payload)
+        except json.JSONDecodeError as err:
+            raise ServiceParamError(msgerr + ": " + str(err))
     else:
-        result["errs"] = "no hay payload de parametros del servicio"
-        return jsonify(result)
+        raise ServiceParamError("no se han cargado parametros del servicio en la peticion.")
 
     if not is_service_params(service_params):
-        result["errs"] = "el formato del payload no es valido"
-        return jsonify(result)
+        raise ServiceParamError("los parametros de servicio no son correctos.")
 
-    if "parameterskv" not in service_params:
-        service_params["parameterskv"] = {}
+    return service_params
 
-    parameters = service_params["parameters"]
-    parameterskv = service_params["parameterskv"]
+async def handle_post_services(service_obj: ServiceObj):
+    """Ejecuta los servicios y responde con los resultados."""
+    try:
+        params = await get_service_params()
+    except ServiceParamError as err:
+        result = ServiceResult(data=None, type="ServiceParamError", errs=str(err))
+    else:
+        parameters = params["parameters"] if "parameters" in params else []
+        parameterskv = params["parameterskv"] if "parameterskv" in params else {}
+        result = await service_obj.run(*parameters, **parameterskv)
 
-    result = await service_obj.run(*parameters, **parameterskv)
-    return jsonify(result)
+    return result
 
 def handle_not_method_service(__route: str):
     """Maneja los metodos que no son permitidos en los servicios."""
