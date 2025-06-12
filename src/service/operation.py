@@ -96,7 +96,11 @@ class ServiceOperation(Generic[P, R], _ServiceOperation[P, R]):
         """Executa el servicio de los parametros posicionales."""
         for param, arg in zip(self.parameters, args):
             try:
-                yield await param.run(arg)
+                result = await param.run(arg)
+                errs = result.get("errs")
+                if not errs is None:
+                    raise ServiceParamError(errs)
+                yield result
             except ServiceParamError as err:
                 msg = "se espera argumentos de los parametros posicionales"
                 msg += f": {self.repr_params}, {err}"
@@ -111,7 +115,11 @@ class ServiceOperation(Generic[P, R], _ServiceOperation[P, R]):
             arg = kwargs[key]
 
             try:
-                yield key, await param.run(arg)
+                result = await param.run(arg)
+                errs = result.get("errs")
+                if not errs is None:
+                    raise ServiceParamError(errs)
+                yield key, result
             except ServiceParamError as err:
                 msg = "se espera argumentos de los parametros clave-valor"
                 msg += f": {self.repr_paramskv}, {err}"
