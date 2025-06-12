@@ -24,7 +24,12 @@ class ClientsPOS(Generic[_K_co], Clients):
         super().__init__(filepath_or_buffer, ftype=ftype, delimiter=delimiter, encoding=encoding)
         self.__mapfields = mapfields
         self.__data_pos = self.data.copy()
-        self.data = DataFrame(index=self.data.index.copy())
+        self.data = DataFrame(
+            columns=self.data.columns.copy(),
+            index=self.data.index.copy(),
+            dtype=str
+        )
+        self.data.fillna("", inplace=True)
 
     @property
     def data_pos(self):
