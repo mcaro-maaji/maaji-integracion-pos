@@ -140,7 +140,7 @@ class Clients:
             updates[field] = series.str.strip()
 
             if field in fields_dates and field in updates:
-                updates[field] = updates[field].apply(format_date)
+                updates[field] = updates[field].astype(str).apply(format_date)
 
         # Todos los cambios en una sola aplicacion al dataframe.
         self.data.update(updates)
@@ -160,7 +160,7 @@ class Clients:
         tipos_identificacion = df_field.isin(list_tipos_identificacion)
         tipos_identificacion = tipos_identificacion[~tipos_identificacion].index
 
-        df_codigo_postal = self.data[ClientField.CODIGOPOSTAL]
+        df_codigo_postal = self.data[ClientField.CODIGOPOSTAL].astype(str)
         codigo_postal = df_codigo_postal.isin(DANE_MUNICIPIOS[DaneField.CODIGO_POSTAL])
         codigo_postal = codigo_postal[~codigo_postal].index
 
@@ -175,7 +175,7 @@ class Clients:
         cliente = df_field.isin(["X"])
         cliente = cliente[~cliente].index
 
-        df_field = self.data[ClientField.DEPARTAMENTO]
+        df_field = self.data[ClientField.DEPARTAMENTO].astype(str)
         departamento = df_field.eq(df_codigo_postal.apply(lambda x: x[:2]))
         departamento = departamento[~departamento].index
 
@@ -193,11 +193,11 @@ class Clients:
             except ValueError:
                 return False
 
-        df_field = self.data[ClientField.FECHADECREACION]
+        df_field = self.data[ClientField.FECHADECREACION].astype(str)
         fecha_creacion = df_field.apply(valid_date)
         fecha_creacion = df_field[~fecha_creacion].index
 
-        df_field = self.data[ClientField.FECHADENACIMIENTO]
+        df_field = self.data[ClientField.FECHADENACIMIENTO].astype(str)
         fecha_nacimiento = df_field.apply(valid_date)
         fecha_nacimiento = df_field[~fecha_nacimiento].index
 
@@ -364,6 +364,6 @@ class Clients:
             NoMatchClientFieldsWarning(no_match_fields) if no_match_fields else None,
             IncorrectClientFieldsWarning(incorrect_fields) if incorrect_fields else None,
             MaxClientsWarning() if self.data.index.size >= WARNING_MAX_CLIENTS else None,
-            fields_exceptions,
-            fields_warnings
+            *fields_exceptions,
+            *fields_warnings
         )
