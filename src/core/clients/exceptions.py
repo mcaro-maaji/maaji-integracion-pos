@@ -14,11 +14,11 @@ class IDMSG(StrEnum):
 
 T_IDMSG = ClientField | IDMSG
 
-__MSG_TIPOS_IDENTIFICACION = "['CC', 'PA', 'CE', 'IE', 'NI', 'TI', 'TE', 'TEL', 'SI']"
+__MSG_TIPOS_IDENTIFICACION = "'CC'|'PA'|'CE'|'IE'|'NI'|'TI'|'TE'|'TEL'|'SI'"
 
 MSG_EXCEP_CLIENTS: dict[T_IDMSG, str] = {
     IDMSG.NO_MATCH_FIELDS: "no se encuentran los campos",
-    ClientField.TIPOIDENTIFICACION: "solo se admiten estos valores " + __MSG_TIPOS_IDENTIFICACION,
+    ClientField.TIPOIDENTIFICACION: "solo se admiten estos valores: " + __MSG_TIPOS_IDENTIFICACION,
     ClientField.NUMERODOCUMENTO: "no puede ser vacio",
     ClientField.CODIGOPOSTAL: "codigo postal invalido",
     ClientField.FORMULADIRECCION: "no puede ser vacio, por defecto 'CALLE'",
@@ -37,7 +37,7 @@ MSG_WARN_CLIENTS: dict[T_IDMSG, str] = {
     ClientField.NOMBRE2: "se recomienda colocar el segundo nombre al cliente",
     ClientField.APELLIDO1: "se recomienda colocar el apellido al cliente",
     ClientField.APELLIDO2: "se recomienda colocar el segundo apellido al cliente",
-    ClientField.SEXO: "solo se admiten estos valores ['F', 'M']",
+    ClientField.SEXO: "solo se admiten estos valores: 'F'|'M'",
     ClientField.PROVEEDOR: "debe estar vacio.",
     ClientField.CLIENTE: "solo se admite el valor equis 'X'",
     ClientField.TELEFONO1: "se recomienda colocar el numero telefono al cliente",
@@ -74,14 +74,14 @@ class _BaseMsgClients(metaclass=_MetaMsgClients):
         elif self.msg_type == "warning" and id_msg in MSG_WARN_CLIENTS:
             msg = MSG_WARN_CLIENTS[id_msg]
         else:
-            msg = f"El ID '{id_msg}' no se clasifica como un '{self.__class__.__name__}'"
+            msg = f"en el campo '{id_msg}' no se clasifica como un '{self.__class__.__name__}'"
             raise IndexError(msg)
 
         self.id_msg = id_msg
         self.index = index
-        self.message = f"ID '{id_msg}', {msg}"
+        self.message = f"en el campo '{id_msg}' {msg}"
         if index:
-            self.message += f", en las siguientes indices: {index}"
+            self.message += f", en los siguientes indices: {index}"
         super().__init__(self.message)
 
 class ClientsException(_BaseMsgClients, Exception):
