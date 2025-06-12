@@ -85,4 +85,8 @@ def get(dataid: UUID, /, converted: bool = False, orientjson: c.params.JsonFrame
     """Obtener los datos de los clientes Shopify mediante el ID."""
     return cegid.get(dataid, converted=converted, orientjson=orientjson)
 
-service_shopify = services.service("shopify", fromraw, frompath, fromfile, getall, get)
+service_shopify = services.service("shopify", fromraw, frompath, fromfile, getall, get, cegid.drop,
+                                   cegid.pop, cegid.poplast, cegid.togglepersistent,
+                                   cegid.requiredfields, cegid.sortfields, cegid.fix,
+                                   cegid.normalize, cegid.analyze, cegid.autofix, cegid.fullfix,
+                                   cegid.exceptions)

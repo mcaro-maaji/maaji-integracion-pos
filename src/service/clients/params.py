@@ -3,6 +3,7 @@
 from uuid import UUID
 from service.decorator import services
 from service.common import params
+from service.mapfields import params as mf_params
 
 @services.parameter(type="'cegid' | 'shopify'")
 def pos(value: str):
@@ -36,4 +37,24 @@ def indices(value: list[str] | list[int]):
     if contain_str_or_int:
         return value
     raise TypeError("el valor arraylist debe contener valores tipo string o number.")
-    
+
+@services.parameter(type="[[[string, string], [number, ...]], ...]")
+def dataupdate(value: list[tuple[tuple[str, str], list[object]]]):
+    """Parametro que verifica que sea un mapping con llaves MapFields y un listado de datos."""
+    value = params.arraylist(value)
+    try:
+        return {mf_params.mapfield(tuple(k)): params.arraylist(v) for k, v in value}
+    except ValueError:
+        pass
+    raise TypeError("el contenido del valor debe ser de tipo [[string, string]: [object, ...]]")
+
+@services.parameter(type="[[[string, string], [number, ...]], ...]")
+def analysis(value: list[tuple[tuple[str, str], list[int]]]):
+    """Devolucion de informacion sobre ClientesPOS, donde las llaves son el MapField y los valores
+    son los indices de las filas con errores."""
+    content = dataupdate(value)
+    try:
+        all(indices(i) for i in content.values())
+    except TypeError:
+        raise TypeError("los indices deben ser de tipo number.")
+    return content

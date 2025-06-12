@@ -45,3 +45,11 @@ def exitstatus(value: int):
         "data": status,
         "type": "ExitStatus[number]"
     })
+
+@services.opt_return(type="[[string, string], ...]")
+def mapfields(value: list[tuple[str, str]]):
+    """Devolucion de servicio con valor de MapFields."""
+    return ServiceResult({
+        "data": value,
+        "type": "[[string, string], ...]"
+    })

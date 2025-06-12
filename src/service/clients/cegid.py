@@ -13,6 +13,7 @@ from service.clients import data, params, returns
 @services.operation(
     c.params.raw,
     c.returns.uuid,
+    dataid=params.dataid,
     ftype=c.params.ftype,
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
@@ -22,6 +23,7 @@ from service.clients import data, params, returns
 def fromraw(raw: str,
             /,
             pos="cegid",
+            dataid: UUID = None,
             ftype="csv",
             delimeter="|",
             encoding="utf-8",
@@ -33,6 +35,7 @@ def fromraw(raw: str,
     uuid = data.create(
         buffer,
         pos=pos,
+        dataid=dataid,
         ftype=ftype,
         delimeter=delimeter,
         encoding=encoding,
@@ -44,6 +47,7 @@ def fromraw(raw: str,
 @services.operation(
     c.params.fpath,
     c.returns.uuid,
+    dataid=params.dataid,
     ftype=c.params.ftype,
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
@@ -53,6 +57,7 @@ def fromraw(raw: str,
 def frompath(fpath: FilePath,
              /,
              pos="cegid",
+             dataid=params.dataid,
              ftype="csv",
              delimeter="|",
              encoding="utf-8",
@@ -62,6 +67,7 @@ def frompath(fpath: FilePath,
     uuid = data.create(
         fpath,
         pos=pos,
+        dataid=dataid,
         ftype=ftype,
         delimeter=delimeter,
         encoding=encoding,
@@ -73,6 +79,7 @@ def frompath(fpath: FilePath,
 @services.operation(
     c.returns.uuid,
     ftype=c.params.ftype,
+    dataid=params.dataid,
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
     idmapfields=mf_params.idmapfields,
@@ -80,6 +87,7 @@ def frompath(fpath: FilePath,
 )
 async def fromfile(*,
                    pos="cegid",
+                   dataid: UUID = None,
                    ftype="csv",
                    delimeter="|",
                    encoding="utf-8",
@@ -89,13 +97,14 @@ async def fromfile(*,
     if not has_request_context():
         raise ServiceError("no se ha leido la peticion al servicio correctamente")
 
-    file: ReadBuffer = (await request.files).get("file")
+    file: ReadBuffer = (await request.files).get("payload.file")
     if not file:
         raise ServiceError("no hay archivo en la peticion del servicio")
 
     uuid = data.create(
         file,
         pos=pos,
+        dataid=dataid,
         ftype=ftype,
         delimeter=delimeter,
         encoding=encoding,
@@ -130,25 +139,105 @@ def get(dataid: UUID, /, converted: bool = False, orientjson: c.params.JsonFrame
     clients = _datafromid(dataid)
     return clients, converted, orientjson
 
-@services.operation(
-    params.indices,
-    c.returns.exitstatus,
-    dataid=params.dataid,
-    axis=c.params.axis
-)
-def drop(indices: list[str] | list[int], dataid: UUID, axis: str = "rows"):
+@services.operation(params.dataid, c.returns.exitstatus)
+def drop(dataid: UUID, /):
     """Elimina toda la informacion de los clientes"""
     clients = _datafromid(dataid)
-    num_axis = 1 if axis == "columns" else 0
-    clients.data.drop(indices, axis=num_axis, inplace=True, errors="ignore")
-    clients.data_pos.drop(indices, axis=num_axis, inplace=True, errors="ignore")
-    return clients
+    clients.data.drop(clients.data.index, inplace=True, errors="ignore")
+    clients.data_pos.drop(clients.data_pos.index, inplace=True, errors="ignore")
+    return 0
 
 @services.operation(params.dataid, c.returns.exitstatus)
 def pop(dataid: UUID, /):
     """Elimina la data de los clientes segun el ID."""
-    _datafromid(dataid)
-    data.DS_CLIENTS_POS.pop(dataid)
+    drop(dataid)
+
+    if dataid in data.DS_CLIENTS_POS:
+        data.DS_CLIENTS_POS.pop(dataid)
+    if dataid in data.DS_CLIENTS_POS.persistent:
+        data.DS_CLIENTS_POS.persistent.remove(dataid)
     return 0
 
-service_cegid = services.service("cegid", fromraw, frompath, fromfile, getall, get, drop, pop)
+@services.operation(c.returns.exitstatus)
+def poplast():
+    """Elimina el ultimo data de los clientes."""
+    list_dataid = getall(slice(-1, None))
+    if list_dataid:
+        pop(list_dataid[0])
+    return 0
+
+@services.operation(params.dataid, c.returns.exitstatus)
+def togglepersistent(dataid: UUID, /):
+    """Agregar el ID de los datos a los persistentes."""
+    _datafromid(dataid)
+    if dataid not in data.DS_CLIENTS_POS.persistent:
+        data.DS_CLIENTS_POS.persistent.append(dataid)
+    else:
+        data.DS_CLIENTS_POS.persistent.remove(dataid)
+    return 0
+
+@services.operation(params.dataid, c.returns.mapfields)
+def requiredfields(dataid: UUID, /):
+    """Busca los nombres de los campos que no existen y son requeridos."""
+    clients = _datafromid(dataid)
+    return list(clients.no_match_fields())
+
+@services.operation(
+    c.params.optional(mf_params.fields),
+    c.returns.exitstatus,
+    dataid=params.dataid
+)
+def sortfields(fields: list[str] = None, *, dataid: UUID):
+    """Ordena los campos segun el nombre."""
+    clients = _datafromid(dataid)
+    if not fields is None:
+        fields = set(fields)
+    # TODO: Revisar, por que usar todos los campos?
+    clients.sort_fields(fields)
+    return 0
+
+@services.operation(params.dataupdate, c.returns.exitstatus, dataid=params.dataid)
+def fix(dataupdate: dict[tuple[str, str], list[object]], *, dataid: UUID):
+    """Cambia la informacion utilizando los MapFields como columna y los valores como las filas."""
+    clients = _datafromid(dataid)
+    clients.fix({k: c.params.series(v) for k, v in dataupdate.items()})
+    return 0
+
+@services.operation(params.dataid, c.returns.exitstatus)
+def normalize(dataid: UUID, /):
+    """Normaliza los datos de los clientes."""
+    clients = _datafromid(dataid)
+    clients.normalize()
+    return 0
+
+@services.operation(params.dataid, returns.analysis)
+def analyze(dataid: UUID, /):
+    """Normaliza los datos de los clientes."""
+    clients = _datafromid(dataid)
+    analysis = clients.analyze()
+    return analysis
+
+@services.operation(params.analysis, c.returns.exitstatus, dataid=params.dataid)
+def autofix(analysis: dict[tuple[str, str], list[int]], *, dataid: UUID):
+    """Autorepara los datos de los clientes, mediante un analisis previo."""
+    clients = _datafromid(dataid)
+    clients.autofix(analysis)
+    return 0
+
+@services.operation(params.dataid, returns.analysis)
+def fullfix(dataid: UUID, /):
+    """Autorepara completamente los datos de los clientes."""
+    clients = _datafromid(dataid)
+    analysis = clients.fullfix()
+    return analysis
+
+@services.operation(params.analysis, returns.exceptions, dataid=params.dataid)
+def exceptions(analysis: dict[tuple[str, str], list[int]], *, dataid: UUID):
+    """Obtiene todos los errores encontrados de los datos de los clientes."""
+    clients = _datafromid(dataid)
+    list_exception = clients.exceptions(analysis)
+    return list_exception
+
+service_cegid = services.service("cegid", fromraw, frompath, fromfile, getall, get, drop,
+                                 pop, poplast, togglepersistent, requiredfields, sortfields, fix,
+                                 normalize, analyze, autofix, fullfix, exceptions)

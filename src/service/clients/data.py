@@ -13,13 +13,13 @@ from core.clients import (
     MAPFIELDS_POS_SHOPIFY_MX
 )
 
-DS_CLIENTS_POS: DataStore[_ClientsPOS] = DataStore(
+DS_CLIENTS_POS: DataStore[_ClientsPOS[str]] = DataStore(
     max_length=7,                         # 7 sitios disponibles para crear data Clients.
     max_size=35 * 1e6,                    # 35 Megabytes.
     max_duration=timedelta(minutes=70)    # 10 minutos cada item
 )
 
-def ds_clients_pos_calc_size(clients: _ClientsPOS):
+def ds_clients_pos_calc_size(clients: _ClientsPOS[str]):
     """Callback para calcular el tamaño de los datos de los clientes."""
     size = int(clients.data_pos.memory_usage(deep=True).sum())
     size += int(clients.data.memory_usage(deep=True).sum())
@@ -30,6 +30,7 @@ DS_CLIENTS_POS.calc_size = ds_clients_pos_calc_size
 def create(fpath_or_buffer: FilePath | ReadBuffer | ReadCsvBuffer,
            /,
            pos: str = "cegid",
+           dataid: UUID = None,
            ftype: str = "csv",
            delimeter: str = "|",
            encoding: str = "utf-8",
@@ -59,5 +60,13 @@ def create(fpath_or_buffer: FilePath | ReadBuffer | ReadCsvBuffer,
         mapfields=mapfields
     )
 
+    if not isinstance(dataid, UUID) and not dataid is None:
+        raise TypeError("el parametro dataid debe ser de tipo string[UUID]")
+
     uuid = DS_CLIENTS_POS.append(data, force=force)
-    return uuid
+    if dataid:
+        clients = DS_CLIENTS_POS.pop(uuid)
+        DS_CLIENTS_POS[dataid] = clients
+    else:
+        dataid = uuid
+    return dataid

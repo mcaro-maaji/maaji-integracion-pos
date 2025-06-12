@@ -5,7 +5,9 @@ from uuid import UUID
 from io import BytesIO
 from pathlib import Path
 from codecs import lookup as lookup_codec
+from pandas import Series
 from service.decorator import services
+from service.parameters import ServiceOptParameter, P, R
 
 @services.parameter(type="string")
 def raw(value: str):
@@ -90,14 +92,14 @@ def orientjson(value: JsonFrameOrient):
     value = raw(value)
     if value in ["split", "records", "index", "columns", "values", "table"]:
         return value
-    raise ValueError("el valor debe ser de tipo JsonFrameOrient.")
+    raise ValueError("se debe elegir el alguno de los JsonFrameOrient.")
 
 @services.parameter(type="'columns'|'rows'")
 def axis(value: Literal["columns", "rows"]):
     """Parametro que indica el tipo de axis, si son columnas o filas en un objecto tipo tabla."""
     if value in ["columns", "rows"]:
         return value
-    raise ValueError("el valor debe ser de tipo string ['columns'|'rows']")
+    raise ValueError("se debe elegir el alguno de estos axis: 'columns'|'rows'")
 
 @services.parameter(type="ArrayList")
 def arraylist(value: list):
@@ -105,3 +107,26 @@ def arraylist(value: list):
     if isinstance(value, (list, tuple)):
         return value
     raise TypeError("el valor debe ser de tipo ArrayList.")
+
+def optional(param: ServiceOptParameter[P, R]) -> ServiceOptParameter[P, R | None]:
+    """Convierte un parametro a uno opcional, devolviendo un None."""
+    def wrapper(*args: P.args, **kwargs: P.kwargs):
+        if not args:
+            return None
+        return param.func(*args, **kwargs)
+
+    return ServiceOptParameter(wrapper, name=param.name, type=param.type, desc=param.desc)        
+
+@services.parameter(type="[string, string]")
+def series(value: list[object]):
+    """Parametro que convierte el valor en uno tipo pandas.Series"""
+    value = arraylist(value)
+    return Series(value)
+
+@services.parameter(type="'raw'|'path'|'file'")
+def datafrom(value: Literal["raw", "path", "file"]):
+    """Parametro que valida que el valor sea el nombre de un metodo para importar informacion."""
+    value = raw(value)
+    if value in ["raw", "path", "file"]:
+        return value
+    raise ValueError("se debe elegir el alguno de estos datafrom: 'raw'|'path'|'file'")
