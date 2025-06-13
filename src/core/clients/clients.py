@@ -263,12 +263,17 @@ class Clients:
                                    all_updates: dict[ClientField, Series]):
         """Añadir actualizaciones respecto al numero de documento del cliente."""
         if len(analysis[ClientField.NUMERODOCUMENTO]) == 0:
-            numero_documento = self.data[ClientField.NUMERODOCUMENTO].apply(lambda x: x[0])
+            def first_chr(value: str):
+                if not value:
+                    return ""
+                return value[0]
+
+            fchr_num_documento = self.data[ClientField.NUMERODOCUMENTO].astype(str).apply(first_chr)
 
             all_updates.update({
                 ClientField.CODIGOALTERNO1: self.data[ClientField.NUMERODOCUMENTO],
                 ClientField.NUMERODOCUMENTOCONTACTO: self.data[ClientField.NUMERODOCUMENTO],
-                ClientField.CODIGOALTERNOCONTACTO: numero_documento
+                ClientField.CODIGOALTERNOCONTACTO: fchr_num_documento
             })
 
     def autofix_codigo_postal(self,
