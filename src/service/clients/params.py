@@ -1,12 +1,13 @@
 """Modulo para definir parametros del servicio de clients: core.clients"""
 
+from typing import Literal
 from uuid import UUID
 from service.decorator import services
 from service.common import params
 from service.mapfields import params as mf_params
 
 @services.parameter(type="'cegid' | 'shopify'")
-def pos(value: str):
+def pos(value: str) -> Literal["cegid", "shopify"]:
     """Parametro para elegir el POS que se usara en la operacion."""
     value = str(value).lower()
 
@@ -36,9 +37,9 @@ def indices(value: list[str] | list[int]):
     contain_str_or_int = all(isinstance(i, (str, int)) for i in value)
     if contain_str_or_int:
         return value
-    raise TypeError("el valor arraylist debe contener valores tipo string o number.")
+    raise TypeError("el valor indices debe contener valores tipo string o number.")
 
-@services.parameter(type="[[[string, string], [number, ...]], ...]")
+@services.parameter(type="[[[string, string], [object, ...]], ...]")
 def dataupdate(value: list[tuple[tuple[str, str], list[object]]]):
     """Parametro que verifica que sea un mapping con llaves MapFields y un listado de datos."""
     value = params.arraylist(value)
@@ -53,8 +54,6 @@ def analysis(value: list[tuple[tuple[str, str], list[int]]]):
     """Devolucion de informacion sobre ClientesPOS, donde las llaves son el MapField y los valores
     son los indices de las filas con errores."""
     content = dataupdate(value)
-    try:
-        all(indices(i) for i in content.values())
-    except TypeError:
-        raise TypeError("los indices deben ser de tipo number.")
+    for i in content.values():
+        indices(i)
     return content

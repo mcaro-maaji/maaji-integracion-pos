@@ -114,11 +114,19 @@ async def fromfile(*,
     return uuid
 
 @services.operation(c.params.index, c.returns.uuids)
-def getall(index: slice = None):
+def getall(index: slice = None, /, pos="cegid"):
     """Obtener todos los IDs de datos de los clientes CEGID."""
     if index is None:
         index = slice(None, None)
-    return list(data.DS_CLIENTS_POS.keys())[index]
+
+    pos = params.pos(pos)
+    if pos == "shopify":
+        ClientsPOS = data.ClientsShopify
+    else:
+        ClientsPOS = data.ClientsCegid
+
+    list_ids = [k for k, v in data.DS_CLIENTS_POS.items() if isinstance(v, ClientsPOS)]
+    return list_ids[index]
 
 def _datafromid(dataid: UUID, /):
     try:
@@ -134,8 +142,11 @@ def _datafromid(dataid: UUID, /):
     converted=params.converted,
     orientjson=c.params.orientjson
 )
-def get(dataid: UUID, /, converted: bool = False, orientjson: c.params.JsonFrameOrient = "records"):
-    """Obtener los datos de los clientes CEGID mediante el ID."""
+def get(dataid: UUID,
+        /,
+        converted: bool = False,
+        orientjson: c.params.JsonFrameOrient = "records"):
+    """Obtener los datos de los clientes mediante el ID."""
     clients = _datafromid(dataid)
     return clients, converted, orientjson
 
@@ -147,9 +158,15 @@ def drop(dataid: UUID, /):
     clients.data_pos.drop(clients.data_pos.index, inplace=True, errors="ignore")
     return 0
 
-@services.operation(params.dataid, c.returns.exitstatus)
-def pop(dataid: UUID, /):
-    """Elimina la data de los clientes segun el ID."""
+@services.operation(c.params.optional(params.dataid), c.returns.exitstatus)
+def pop(dataid: UUID = None, /):
+    """Elimina la data de los clientes segun el identificador, sin este se elimina el ultimo."""
+    if dataid is None:
+        list_dataid = getall(slice(-1, None))
+        if not list_dataid:
+            return 0
+        dataid = list_dataid[0]
+
     drop(dataid)
 
     if dataid in data.DS_CLIENTS_POS:
@@ -158,16 +175,8 @@ def pop(dataid: UUID, /):
         data.DS_CLIENTS_POS.persistent.remove(dataid)
     return 0
 
-@services.operation(c.returns.exitstatus)
-def poplast():
-    """Elimina el ultimo data de los clientes."""
-    list_dataid = getall(slice(-1, None))
-    if list_dataid:
-        pop(list_dataid[0])
-    return 0
-
 @services.operation(params.dataid, c.returns.exitstatus)
-def togglepersistent(dataid: UUID, /):
+def persistent(dataid: UUID, /):
     """Agregar el ID de los datos a los persistentes."""
     _datafromid(dataid)
     if dataid not in data.DS_CLIENTS_POS.persistent:
@@ -192,7 +201,6 @@ def sortfields(fields: list[str] = None, *, dataid: UUID):
     clients = _datafromid(dataid)
     if not fields is None:
         fields = set(fields)
-    # TODO: Revisar, por que usar todos los campos?
     clients.sort_fields(fields)
     return 0
 
@@ -239,5 +247,5 @@ def exceptions(analysis: dict[tuple[str, str], list[int]], *, dataid: UUID):
     return list_exception
 
 service_cegid = services.service("cegid", fromraw, frompath, fromfile, getall, get, drop,
-                                 pop, poplast, togglepersistent, requiredfields, sortfields, fix,
+                                 pop, persistent, requiredfields, sortfields, fix,
                                  normalize, analyze, autofix, fullfix, exceptions)

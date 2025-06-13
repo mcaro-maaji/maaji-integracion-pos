@@ -2,7 +2,6 @@
 
 from uuid import UUID
 from utils.typing import FilePath
-from service import common as c
 from service.decorator import services
 from service.clients import cegid
 
@@ -13,6 +12,7 @@ from service.clients import cegid
 )
 def fromraw(raw: str,
             /,
+            dataid: UUID = None,
             ftype="csv",
             delimeter=";",
             encoding="utf-8",
@@ -21,6 +21,7 @@ def fromraw(raw: str,
     """Crea los datos de los clientes Shopify por medio de un string."""
     return cegid.fromraw(raw,
                        pos="shopify",
+                       dataid=dataid,
                        ftype=ftype,
                        delimeter=delimeter,
                        encoding=encoding,
@@ -34,6 +35,7 @@ def fromraw(raw: str,
 )
 def frompath(fpath: FilePath,
              /,
+             dataid: UUID = None,
              ftype="csv",
              delimeter=";",
              encoding="utf-8",
@@ -42,6 +44,7 @@ def frompath(fpath: FilePath,
     """Crea los datos de los clientes Shopify por medio de un ruta (path)."""
     return cegid.frompath(fpath,
                         pos="shopify",
+                        dataid=dataid,
                         ftype=ftype,
                         delimeter=delimeter,
                         encoding=encoding,
@@ -54,6 +57,7 @@ def frompath(fpath: FilePath,
     **cegid.fromfile.parameterskv
 )
 async def fromfile(*,
+                   dataid: UUID = None,
                    ftype="csv",
                    delimeter=";",
                    encoding="utf-8",
@@ -61,11 +65,12 @@ async def fromfile(*,
                    force=False):
     """Crea los datos de los clientes Shopify por medio de un archivo."""
     return await cegid.fromfile(pos="shopify",
-                              ftype=ftype,
-                              delimeter=delimeter,
-                              encoding=encoding,
-                              idmapfields=idmapfields,
-                              force=force)
+                                dataid=dataid,
+                                ftype=ftype,
+                                delimeter=delimeter,
+                                encoding=encoding,
+                                idmapfields=idmapfields,
+                                force=force)
 
 @services.operation(
     cegid.getall.opt_return,
@@ -74,19 +79,9 @@ async def fromfile(*,
 )
 def getall(index: slice = None):
     """Obtener todos los IDs de datos de los clientes Shopify."""
-    return cegid.getall(index)
+    return cegid.getall(index, pos="shopify")
 
-@services.operation(
-    cegid.get.opt_return,
-    *cegid.get.parameters,
-    **cegid.get.parameterskv
-)
-def get(dataid: UUID, /, converted: bool = False, orientjson: c.params.JsonFrameOrient = "records"):
-    """Obtener los datos de los clientes Shopify mediante el ID."""
-    return cegid.get(dataid, converted=converted, orientjson=orientjson)
-
-service_shopify = services.service("shopify", fromraw, frompath, fromfile, getall, get, cegid.drop,
-                                   cegid.pop, cegid.poplast, cegid.togglepersistent,
-                                   cegid.requiredfields, cegid.sortfields, cegid.fix,
-                                   cegid.normalize, cegid.analyze, cegid.autofix, cegid.fullfix,
-                                   cegid.exceptions)
+service_shopify = services.service("shopify", fromraw, frompath, fromfile, getall, cegid.get,
+                                   cegid.drop, cegid.pop, cegid.persistent, cegid.requiredfields,
+                                   cegid.sortfields, cegid.fix, cegid.normalize, cegid.analyze,
+                                   cegid.autofix, cegid.fullfix, cegid.exceptions)
