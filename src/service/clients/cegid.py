@@ -97,7 +97,7 @@ async def fromfile(*,
     if not has_request_context():
         raise ServiceError("no se ha leido la peticion al servicio correctamente")
 
-    file: ReadBuffer = (await request.files).get("payload.file")
+    file: ReadBuffer = (await request.files).get("payload.files")
     if not file:
         raise ServiceError("no hay archivo en la peticion del servicio")
 
