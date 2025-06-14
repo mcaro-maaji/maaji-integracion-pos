@@ -5,32 +5,45 @@ from datetime import timedelta
 from core.clients import MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX
 from core.mapfields import MapFields
 from db.datastore import DataStore
-from service import common as c
 from service.decorator import services
-from service.mapfields import params, returns
+from service.mapfields import operations as opt
 
 DS_MAPFIELDS_CLIENTS: DataStore[MapFields] = DataStore(
-    max_length=7, # 5 sitios disponibles para crear MapFields y 2 por defecto.
-    max_size=1,
-    max_duration=timedelta(days=365*5)
+    max_length=7,                         # 5 sitios disponibles y 2 por defecto.
+    max_size=1,                           # 1 slot, sin calculos
+    max_duration=timedelta(minutes=70)    # 10 minutos cada item
 )
 
 default_mapfields = DS_MAPFIELDS_CLIENTS.extend(MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX)
 DS_MAPFIELDS_CLIENTS.persistent.extend(default_mapfields)
 
-@services.operation(c.params.index, c.returns.uuids)
+@services.operation(opt.create.opt_return, *opt.create.parameters, **opt.create.parameterskv)
+def create(value: list[tuple[str, str]], /, dataid: UUID = None):
+    """Crea un nuevo mapeo de campos de los ClientesPOS."""
+    return opt.create(value, dataid=dataid, idstore=DS_MAPFIELDS_CLIENTS.id)
+
+@services.operation(opt.getall.opt_return, *opt.getall.parameters, **opt.getall.parameterskv)
 def getall(index: slice = None):
     """Obtener todos los IDs de mapeo de campos (MapFields) de los clientes."""
-    if index is None:
-        index = slice(None, None)
-    return list(DS_MAPFIELDS_CLIENTS.keys())[index]
+    return opt.getall(index, idstore=DS_MAPFIELDS_CLIENTS.id)
 
-@services.operation(params.idmapfields, returns.mapfields)
+@services.operation(opt.get.opt_return, *opt.get.parameters, **opt.get.parameterskv)
 def get(key: UUID):
     """Obtener el mapeo de campos (MapFields) de los clientes con el ID."""
+    return opt.get(key, idstore=DS_MAPFIELDS_CLIENTS.id)
 
-    if key in DS_MAPFIELDS_CLIENTS:
-        return DS_MAPFIELDS_CLIENTS[key]
-    raise KeyError(f"no se encuentra el MapFields de Clientes con la llave UUID: '{key}'")
+@services.operation(opt.pop.opt_return, *opt.pop.parameters, **opt.pop.parameterskv)
+def pop(dataid: UUID | None):
+    """Elimina un mapfields segun el identificador, sin este se elimina el ultimo."""
+    return opt.pop(dataid, idstore=DS_MAPFIELDS_CLIENTS.id)
 
-service_clients = services.service("clients", getall, get)
+@services.operation(
+    opt.persistent.opt_return,
+    *opt.persistent.parameters,
+    **opt.persistent.parameterskv
+)
+def persistent(dataid: UUID):
+    """Agregar el ID de los datos a los persistentes."""
+    return opt.persistent(dataid, idstore=DS_MAPFIELDS_CLIENTS.id)
+
+service_clients = services.service("clients", create, getall, get, pop, persistent)

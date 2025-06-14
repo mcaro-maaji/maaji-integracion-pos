@@ -21,7 +21,7 @@ def fields(value: list[str]):
 @services.parameter(type="[string, string]")
 def mapfield(value: tuple[str, str]):
     """Parametro que valida que el valor sea un tipo MapFields."""
-    value = fields(value)
+    value = tuple(fields(value))
     if len(value) != 2:
         raise ValueError("el valor de ser un mapfield que contiene 2 elementos de tipo string.")
     return value
