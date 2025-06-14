@@ -1,5 +1,6 @@
 """Modulo para crear un gestionador de datos, como si fuera un cache."""
 
+from __future__ import annotations
 from typing import TypeVar, Generic, Callable, overload, Literal
 from collections import UserDict
 from datetime import datetime, timedelta
@@ -10,7 +11,7 @@ VT = TypeVar("VT")
 
 class DataStore(Generic[VT], UserDict[UUID, VT]):
     """Gestiona capacidad de espacio de los datos."""
-    cache: dict[UUID, "DataStore"] = {}
+    cache: dict[UUID, DataStore] = {}
     __id: UUID
     __create_at: datetime
     __init_at: datetime
@@ -191,10 +192,10 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
 
     @overload
     @classmethod
-    def get_datastore(cls, idstore: UUID, err: Literal["raise"] = ...) -> "DataStore": ...
+    def get_datastore(cls, idstore: UUID, err: Literal["raise"] = ...) -> DataStore: ...
     @overload
     @classmethod
-    def get_datastore(cls, idstore: UUID, err: Literal["ignore"] = ...) -> "DataStore" | None: ...
+    def get_datastore(cls, idstore: UUID, err: Literal["ignore"] = ...) -> DataStore | None: ...
     @classmethod
     def get_datastore(cls, idstore: UUID, err: Literal["raise", "ignore"] = "raise"):
         """Comprueba que exista un DataStore en cache, si no existe lanza error."""
