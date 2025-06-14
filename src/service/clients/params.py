@@ -3,8 +3,8 @@
 from typing import Literal
 from uuid import UUID
 from service.decorator import services
-from service.common import params
-from service.mapfields import params as mf_params
+import service.common as c
+import service.mapfields as m
 
 @services.parameter(type="'cegid' | 'shopify'")
 def pos(value: str) -> Literal["cegid", "shopify"]:
@@ -18,22 +18,22 @@ def pos(value: str) -> Literal["cegid", "shopify"]:
 @services.parameter(type="ClientsPOS[UUID]")
 def dataid(value: str | UUID):
     """Parametro para contiene el ID de los campos de los clientes."""
-    return params.uuid(value)
+    return c.params.uuid(value)
 
 @services.parameter(type="boolean")
 def converted(value: bool = False):
     """Parametro para escoger si data de clientes son los convertidos o no por MapFields."""
-    return params.boolean(value)
+    return c.params.boolean(value)
 
 @services.parameter(type="boolean")
 def force(value: bool = False):
     """Parametro para forzar la creacion de los datos de los clientes, hace espacio en memoria."""
-    return params.boolean(value)
+    return c.params.boolean(value)
 
 @services.parameter(type="string[] | number[]")
 def indices(value: list[str] | list[int]):
     """Parametro que verifica que el valor es tipo ArrayList con valores tipo string o number."""
-    value = params.arraylist(value)
+    value = c.params.arraylist(value)
     contain_str_or_int = all(isinstance(i, (str, int)) for i in value)
     if contain_str_or_int:
         return value
@@ -42,9 +42,9 @@ def indices(value: list[str] | list[int]):
 @services.parameter(type="[[[string, string], [object, ...]], ...]")
 def dataupdate(value: list[tuple[tuple[str, str], list[object]]]):
     """Parametro que verifica que sea un mapping con llaves MapFields y un listado de datos."""
-    value = params.arraylist(value)
+    value = c.params.arraylist(value)
     try:
-        return {mf_params.mapfield(tuple(k)): params.arraylist(v) for k, v in value}
+        return {m.params.mapfield(tuple(k)): c.params.arraylist(v) for k, v in value}
     except ValueError:
         pass
     raise TypeError("el contenido del valor debe ser de tipo [[string, string]: [object, ...]]")

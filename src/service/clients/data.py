@@ -4,7 +4,6 @@ from uuid import UUID
 from datetime import timedelta
 from db.datastore import DataStore
 from utils.typing import FilePath, ReadBuffer, ReadCsvBuffer
-from service.mapfields.clients import get as get_mapfields
 from core.clients import (
     ClientsPOS as _ClientsPOS,
     ClientsCegid,
@@ -12,6 +11,7 @@ from core.clients import (
     MAPFIELDS_POS_CEGID,
     MAPFIELDS_POS_SHOPIFY_MX
 )
+import service.mapfields as m
 
 DS_CLIENTS_POS: DataStore[_ClientsPOS[str]] = DataStore(
     max_length=7,                         # 7 sitios disponibles para crear data Clients.
@@ -48,7 +48,7 @@ def create(fpath_or_buffer: FilePath | ReadBuffer | ReadCsvBuffer,
         raise ValueError("no se ha seleccionado un POS valido.")
 
     if not idmapfields is None:
-        mapfields = get_mapfields(idmapfields)
+        mapfields = m.clients.get(idmapfields)
     else:
         mapfields = default_mapfields
 

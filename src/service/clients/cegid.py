@@ -1,14 +1,14 @@
-"""Modulo para tener un servicio de los datos ClientsCEGID: core.clients.pos_cegid"""
+"""Modulo para tener un servicio de los datos Clients CEGID: core.clients.pos_cegid"""
 
 from uuid import UUID
 from io import BytesIO
 from quart import request, has_request_context
 from utils.typing import FilePath, ReadBuffer
-from service import common as c
 from service.types import ServiceError
 from service.decorator import services
-from service.mapfields import params as mf_params
 from service.clients import data, params, returns
+import service.common as c
+import service.mapfields as m
 
 @services.operation(
     c.params.raw,
@@ -17,7 +17,7 @@ from service.clients import data, params, returns
     ftype=c.params.ftype,
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
-    idmapfields=mf_params.idmapfields,
+    idmapfields=m.params.dataid,
     force=params.force
 )
 def fromraw(raw: str,
@@ -51,7 +51,7 @@ def fromraw(raw: str,
     ftype=c.params.ftype,
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
-    idmapfields=mf_params.idmapfields,
+    idmapfields=m.params.dataid,
     force=params.force
 )
 def frompath(fpath: FilePath,
@@ -82,7 +82,7 @@ def frompath(fpath: FilePath,
     dataid=params.dataid,
     delimeter=c.params.delimeter,
     encoding=c.params.encoding,
-    idmapfields=mf_params.idmapfields,
+    idmapfields=m.params.dataid,
     force=params.force
 )
 async def fromfile(*,
@@ -192,7 +192,7 @@ def requiredfields(dataid: UUID, /):
     return list(clients.no_match_fields())
 
 @services.operation(
-    c.params.optional(mf_params.fields),
+    c.params.optional(m.params.fields),
     c.returns.exitstatus,
     dataid=params.dataid
 )
