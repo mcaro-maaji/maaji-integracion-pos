@@ -14,20 +14,20 @@ from utils.typing import NonStringIterable
 from .mapfunc import MapFieldFunc
 from .mapdata import MapFieldData, MapData
 
-_KP_co = TypeVar("_KP_co", bound=str, covariant=True) # key primary
-_KS_co = TypeVar("_KS_co", bound=str, covariant=True) # key segundary
+_KP = TypeVar("_KP", bound=str) # key primary
+_KS = TypeVar("_KS", bound=str) # key segundary
 
-class MapFields(Generic[_KP_co, _KS_co], tuple):
+class MapFields(Generic[_KP, _KS], tuple):
     """Mapea los campos con tuplas y los datos en funciones con criterios."""
 
     # fields line 1 & 2
     #      fields_1          fields_2          fields_1          fields_2
     # [("df_1_column_1", "df_2_column_1"), ("df_1_column_2", "df_2_column_2")]
-    __fl_1: tuple[_KP_co]
-    __fl_2: tuple[_KS_co]
-    __mapdata: dict[tuple[_KP_co, _KS_co], MapFieldData]
+    __fl_1: tuple[_KP]
+    __fl_2: tuple[_KS]
+    __mapdata: dict[tuple[_KP, _KS], MapFieldData]
 
-    def __new__(cls, *fields: tuple[_KP_co, _KS_co]):
+    def __new__(cls, *fields: tuple[_KP, _KS]):
         for field in fields:
             if not isinstance(field, NonStringIterable) or len(field) != 2:
                 raise TypeError(f"no se define un MapField con el valor: '{field}'")
@@ -54,18 +54,18 @@ class MapFields(Generic[_KP_co, _KS_co], tuple):
         return self.__fl_2
 
     @overload
-    def __getitem__(self, key: int) -> tuple[_KP_co, _KS_co]: ...
+    def __getitem__(self, key: int) -> tuple[_KP, _KS]: ...
     @overload
-    def __getitem__(self, key: slice) -> tuple[tuple[_KP_co, _KS_co], ...]: ...
+    def __getitem__(self, key: slice) -> tuple[tuple[_KP, _KS], ...]: ...
     @overload
-    def __getitem__(self, key: _KP_co) -> tuple[_KS_co, ...]: ...
+    def __getitem__(self, key: _KP) -> tuple[_KS, ...]: ...
     @overload
-    def __getitem__(self, key: _KS_co) -> tuple[_KP_co, ...]: ...
+    def __getitem__(self, key: _KS) -> tuple[_KP, ...]: ...
     @overload
-    def __getitem__(self, key: str) -> tuple[_KP_co, ...] | tuple[_KS_co, ...]: ...
+    def __getitem__(self, key: str) -> tuple[_KP, ...] | tuple[_KS, ...]: ...
     @overload
-    def __getitem__(self, key: tuple[_KP_co, _KS_co] | tuple[str, str]) -> MapFieldData: ...
-    def __getitem__(self, key: int | slice | tuple[_KP_co, _KS_co] | _KP_co | _KS_co):
+    def __getitem__(self, key: tuple[_KP, _KS] | tuple[str, str]) -> MapFieldData: ...
+    def __getitem__(self, key: int | slice | tuple[_KP, _KS] | _KP | _KS):
         if isinstance(key, (int, slice)):
             return super().__getitem__(key)
 

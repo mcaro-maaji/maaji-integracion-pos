@@ -5,8 +5,8 @@ from collections import UserDict
 from utils.typing import is_dict_str
 from .mapfunc import MapFieldFunc
 
-_KP_co = TypeVar("_KP_co", bound=str, covariant=True) # key primary
-_KS_co = TypeVar("_KS_co", bound=str, covariant=True) # key segundary
+_KP = TypeVar("_KP", bound=str) # key primary
+_KS = TypeVar("_KS", bound=str) # key segundary
 
 class MapData(UserDict):
     """Almacena los datos que se homologan y asignar la funcion aplicable de los mismos."""
@@ -26,9 +26,9 @@ class MapData(UserDict):
         # FEAT: wrapper control errors to callback
         return self.mapfunc.cb(self.data, default)
 
-class MapFieldData(Generic[_KP_co, _KS_co]):
+class MapFieldData(Generic[_KP, _KS]):
     """Contiene los datos que se homologan en un MapField, dependiendo de la funcion."""
-    __mapfield: tuple[_KP_co, _KS_co]
+    __mapfield: tuple[_KP, _KS]
     __eq: MapData
     __di: MapData
     __co: MapData
@@ -37,7 +37,7 @@ class MapFieldData(Generic[_KP_co, _KS_co]):
     __sf: MapData
     __re: MapData
 
-    def __init__(self, mapfield: tuple[_KP_co, _KS_co]):
+    def __init__(self, mapfield: tuple[_KP, _KS]):
         self.__mapfield = mapfield
         self.__eq = MapData(func=MapFieldFunc.EQ)
         self.__di = MapData(func=MapFieldFunc.DI)
