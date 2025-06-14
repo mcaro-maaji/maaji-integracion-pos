@@ -41,15 +41,15 @@ async def get_service_params():
         form = await request.form
         payload_parameters = form.get("payload.parameters") or "[]"
         payload_parameterskv = form.get("payload.parameterskv") or "{}"
-        payload = "{" + """
-            "parameters": {},
-            "parameterskv": {}
-        """.format(payload_parameters, payload_parameterskv) + "}"
+        payload = "{" + f"""
+            "parameters": {payload_parameters},
+            "parameterskv": {payload_parameterskv}
+        """ + "}"
 
         try:
             service_params = json.loads(payload)
         except json.JSONDecodeError as err:
-            raise ServiceParamError(msgerr + ": " + str(err))
+            raise ServiceParamError(msgerr + ": " + str(err)) from err
     else:
         raise ServiceParamError("no se han cargado parametros del servicio en la peticion.")
 
@@ -65,8 +65,8 @@ async def handle_post_services(service_obj: ServiceObj):
     except ServiceParamError as err:
         result = ServiceResult(data=None, type="ServiceParamError", errs=str(err))
     else:
-        parameters = params["parameters"] if "parameters" in params else []
-        parameterskv = params["parameterskv"] if "parameterskv" in params else {}
+        parameters = params.get("parameters", [])
+        parameterskv = params.get("parameterskv", {})
         result = await service_obj.run(*parameters, **parameterskv)
 
     return result
