@@ -1,6 +1,6 @@
 """Modulo para crear un gestionador de datos, como si fuera un cache."""
 
-from typing import TypeVar, Generic, Callable, overload
+from typing import TypeVar, Generic, Callable, overload, Literal
 from collections import UserDict
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
@@ -188,5 +188,19 @@ class DataStore(Generic[VT], UserDict[UUID, VT]):
         for datastore in cls.cache.values():
             if datastore:
                 datastore.popitems_expired()
+
+    @overload
+    @classmethod
+    def get_datastore(cls, idstore: UUID, err: Literal["raise"] = ...) -> "DataStore": ...
+    @overload
+    @classmethod
+    def get_datastore(cls, idstore: UUID, err: Literal["ignore"] = ...) -> "DataStore" | None: ...
+    @classmethod
+    def get_datastore(cls, idstore: UUID, err: Literal["raise", "ignore"] = "raise"):
+        """Comprueba que exista un DataStore en cache, si no existe lanza error."""
+        datastore = cls.cache.get(idstore)
+        if datastore is None and err == "raise":
+            raise KeyError(f"no se ha encontrado el DataStore con el ID: '{idstore}'")
+        return datastore
 
 sheduler.add_job(DataStore.clear_cache, "interval", minutes=1)
