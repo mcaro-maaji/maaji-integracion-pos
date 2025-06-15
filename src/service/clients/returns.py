@@ -15,9 +15,9 @@ def datajson(value: tuple[ClientsPOS, bool, JsonFrameOrient]):
         raise TypeError("el valor devuelto por la operacion debe ser de tipo ClientsPOS.")
 
     if converted:
-        data = clients.data.to_json(orient=orient)
+        data = clients.data.to_dict(orient)
     else:
-        data = clients.data_pos.to_json(orient=orient)
+        data = clients.data_pos.to_dict(orient)
 
     return ServiceResult(data=data, type="JsonOriented[ClientsPOS]")
 

@@ -46,4 +46,4 @@ def persistent(dataid: UUID):
     """Agregar el ID de los datos a los persistentes."""
     return opt.persistent(dataid, idstore=DS_MAPFIELDS_CLIENTS.id)
 
-service_clients = services.service("clients", create, getall, get, pop, persistent)
+service = services.service("clients", create, getall, get, pop, persistent)

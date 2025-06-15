@@ -3,12 +3,13 @@
 __version__ = "1.0.0"
 
 __all__ = [
-    "service_cegid",
-    "group_clients",
+    "params",
+    "returns",
+    "cegid",
+    "shopify"
 ]
 
 from service.decorator import services
-from .cegid import service_cegid
-from .shopify import service_shopify
+from . import params, returns, data, cegid, shopify
 
-group_clients = services.group("clients", service_cegid, service_shopify)
+group = services.group("clients", cegid.service, shopify.service)

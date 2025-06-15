@@ -51,7 +51,7 @@ def dataupdate(value: list[tuple[tuple[str, str], list[object]]]):
 
 @services.parameter(type="[[[string, string], [number, ...]], ...]")
 def analysis(value: list[tuple[tuple[str, str], list[int]]]):
-    """Devolucion de informacion sobre ClientesPOS, donde las llaves son el MapField y los valores
+    """Parametro de informacion sobre ClientesPOS, donde las llaves son el MapField y los valores
     son los indices de las filas con errores."""
     content = dataupdate(value)
     for i in content.values():

@@ -2,10 +2,12 @@
 
 from typing import TypeAlias, Literal
 from uuid import UUID
-from io import BytesIO
+from io import BytesIO, BufferedIOBase
+from os import PathLike, fsdecode
 from pathlib import Path
 from codecs import lookup as lookup_codec
 from pandas import Series
+from werkzeug.datastructures import FileStorage
 from service.decorator import services
 from service.parameters import ServiceOptParameter, P, R
 
@@ -44,12 +46,12 @@ def index(value: int | tuple[int, int, int]):
         return slice(value)
     raise TypeError("los valores de los indices deben ser numeros.")
 
-@services.parameter(type="string[Path]")
-def fpath(value: str | Path):
+@services.parameter(type="string[PathLike]")
+def fpath(value: str | bytes | PathLike):
     """Parametro que recibe la ruta de un archivo."""
     if not value:
-        raise TypeError("el valor debe ser de tipo 'string | Path' y no vacio.")
-    path = Path(value)
+        raise TypeError("el valor debe ser de tipo 'string[PathLike]' y no vacio.")
+    path = Path(fsdecode(value))
     if not path.is_file():
         raise FileNotFoundError(f"archivo no encontrado en la ruta: {value}")
     return path
@@ -115,7 +117,7 @@ def optional(param: ServiceOptParameter[P, R]) -> ServiceOptParameter[P, R | Non
             return None
         return param.func(*args, **kwargs)
 
-    return ServiceOptParameter(wrapper, name=param.name, type=param.type, desc=param.desc)        
+    return ServiceOptParameter(wrapper, name=param.name, type=param.type, desc=param.desc)
 
 @services.parameter(type="[string, string]")
 def series(value: list[object]):
@@ -123,10 +125,18 @@ def series(value: list[object]):
     value = arraylist(value)
     return Series(value)
 
-@services.parameter(type="'raw'|'path'|'file'")
-def datafrom(value: Literal["raw", "path", "file"]):
+@services.parameter(type="'raw'|'path'|'buffer'|'file'")
+def datafrom(value: Literal["raw", "path", "buffer", "file"]):
     """Parametro que valida que el valor sea el nombre de un metodo para importar informacion."""
     value = raw(value)
-    if value in ["raw", "path", "file"]:
+    if value in ["raw", "path", "buffer", "file"]:
         return value
-    raise ValueError("se debe elegir el alguno de estos datafrom: 'raw'|'path'|'file'")
+    raise ValueError("se debe elegir el alguno de estos datafrom: 'raw'|'path'|'buffer'|'file'")
+
+@services.parameter(type="string | string[Path] | string[Request.KeyPayload]")
+def filedesc(value: str | bytes | PathLike | BufferedIOBase | FileStorage):
+    """Parametro que comprueba el valor sea la descripcion de un archivo."""
+    if isinstance(value, (str, bytes, PathLike, BufferedIOBase, FileStorage)):
+        return value
+    msg = "el valor debe ser de tipo 'string | string[Path] | string[Request.KeyPayload]'"
+    raise TypeError(msg)

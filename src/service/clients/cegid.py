@@ -1,9 +1,10 @@
 """Modulo para tener un servicio de los datos Clients CEGID: core.clients.pos_cegid"""
 
 from uuid import UUID
-from io import BytesIO
+from io import BufferedIOBase, BytesIO
+from os import PathLike
 from quart import request, has_request_context
-from utils.typing import FilePath, ReadBuffer
+from werkzeug.datastructures import FileStorage
 from service.types import ServiceError
 from service.decorator import services
 from service.clients import data, params, returns
@@ -11,73 +12,9 @@ import service.common as c
 import service.mapfields as m
 
 @services.operation(
-    c.params.raw,
+    c.params.optional(c.params.filedesc),
     c.returns.uuid,
-    dataid=params.dataid,
-    ftype=c.params.ftype,
-    delimeter=c.params.delimeter,
-    encoding=c.params.encoding,
-    idmapfields=m.params.dataid,
-    force=params.force
-)
-def fromraw(raw: str,
-            /,
-            pos="cegid",
-            dataid: UUID = None,
-            ftype="csv",
-            delimeter="|",
-            encoding="utf-8",
-            idmapfields: UUID = None,
-            force=False):
-    """Crea los datos de los clientes CEGID por medio de un string."""
-    raw_bytes = raw.encode(encoding)
-    buffer = BytesIO(raw_bytes)
-    uuid = data.create(
-        buffer,
-        pos=pos,
-        dataid=dataid,
-        ftype=ftype,
-        delimeter=delimeter,
-        encoding=encoding,
-        idmapfields=idmapfields,
-        force=force
-    )
-    return uuid
-
-@services.operation(
-    c.params.fpath,
-    c.returns.uuid,
-    dataid=params.dataid,
-    ftype=c.params.ftype,
-    delimeter=c.params.delimeter,
-    encoding=c.params.encoding,
-    idmapfields=m.params.dataid,
-    force=params.force
-)
-def frompath(fpath: FilePath,
-             /,
-             pos="cegid",
-             dataid=params.dataid,
-             ftype="csv",
-             delimeter="|",
-             encoding="utf-8",
-             idmapfields: UUID = None,
-             force=False):
-    """Crea los datos de los clientes CEGID por medio de un ruta (path)."""
-    uuid = data.create(
-        fpath,
-        pos=pos,
-        dataid=dataid,
-        ftype=ftype,
-        delimeter=delimeter,
-        encoding=encoding,
-        idmapfields=idmapfields,
-        force=force
-    )
-    return uuid
-
-@services.operation(
-    c.returns.uuid,
+    datafrom=c.params.datafrom,
     ftype=c.params.ftype,
     dataid=params.dataid,
     delimeter=c.params.delimeter,
@@ -85,24 +22,37 @@ def frompath(fpath: FilePath,
     idmapfields=m.params.dataid,
     force=params.force
 )
-async def fromfile(*,
-                   pos="cegid",
-                   dataid: UUID = None,
-                   ftype="csv",
-                   delimeter="|",
-                   encoding="utf-8",
-                   idmapfields: UUID = None,
-                   force=False):
-    """Crea los datos de los clientes CEGID por medio de un archivo."""
-    if not has_request_context():
-        raise ServiceError("no se ha leido la peticion al servicio correctamente")
+async def create(filedesc: str | bytes | PathLike | BufferedIOBase = None,
+                 /,
+                 pos="cegid",
+                 datafrom="raw",
+                 dataid: UUID = None,
+                 ftype="csv",
+                 delimeter="|",
+                 encoding="utf-8",
+                 idmapfields: UUID = None,
+                 force=False):
+    """Crea los datos de los clientes CEGID."""
+    if datafrom == "raw":
+        if not isinstance(filedesc, BufferedIOBase):
+            if not isinstance(filedesc, str):
+                raise ServiceError("el parametro 'filedesc' debe ser de tipo string")
+            raw_bytes = filedesc.encode(encoding)
+            filedesc = BytesIO(raw_bytes)
+    elif datafrom == "path":
+        c.params.fpath(filedesc)
+    elif datafrom == "file":
+        if not isinstance(filedesc, str):
+            filedesc = "payload.files"
+        if not has_request_context():
+            raise ServiceError("no se ha leido la peticion al servicio correctamente")
 
-    file: ReadBuffer = (await request.files).get("payload.files")
-    if not file:
-        raise ServiceError("no hay archivo en la peticion del servicio")
+        filedesc: FileStorage = (await request.files).get(filedesc)
+        if not filedesc:
+            raise ServiceError("no hay archivo en la peticion del servicio")
 
     uuid = data.create(
-        file,
+        filedesc,
         pos=pos,
         dataid=dataid,
         ftype=ftype,
@@ -246,6 +196,6 @@ def exceptions(analysis: dict[tuple[str, str], list[int]], *, dataid: UUID):
     list_exception = clients.exceptions(analysis)
     return list_exception
 
-service_cegid = services.service("cegid", fromraw, frompath, fromfile, getall, get, drop,
-                                 pop, persistent, requiredfields, sortfields, fix,
-                                 normalize, analyze, autofix, fullfix, exceptions)
+service = services.service("cegid", create, getall, get, drop, pop, persistent,
+                           requiredfields, sortfields, fix, normalize, analyze,
+                           autofix, fullfix, exceptions)

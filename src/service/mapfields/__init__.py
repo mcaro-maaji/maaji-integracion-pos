@@ -4,13 +4,10 @@ __version__ = "1.0.0"
 
 __all__ = [
     "params",
-    "returns",
-    "service_clients",
-    "group_mapfields"
+    "returns"
 ]
 
 from service.decorator import services
-from .clients import service_clients
-from . import params, returns
+from . import params, returns, clients
 
-group_mapfields = services.group("mapfields", service_clients)
+group = services.group("mapfields", clients.service)
