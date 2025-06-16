@@ -1,6 +1,6 @@
 """Modulo para establecer las rutas de las paginas web de la aplicacion."""
 
-from quart import Blueprint, render_template
+from quart import Blueprint, redirect, render_template
 from utils.constants import PATH_TEMPLATES
 
 bp_pages = Blueprint("pages", __name__, url_prefix="/")
@@ -8,6 +8,11 @@ bp_pages = Blueprint("pages", __name__, url_prefix="/")
 PATH_PAGES = PATH_TEMPLATES / "pages"
 paths_pages = list(PATH_PAGES.glob("**/*.html"))
 paths_pages = [path.as_uri().removeprefix(PATH_PAGES.as_uri()) for path in paths_pages]
+
+@bp_pages.route("/")
+async def pages():
+    """Pagina principal"""
+    return redirect("/home")
 
 for path in paths_pages:
     route = path.removesuffix(".html")
@@ -23,3 +28,8 @@ for path in paths_pages:
         view_func=_handler,
         strict_slashes=False,
     )
+
+@bp_pages.route('/<path:invalid_path>')
+async def page_not_found(invalid_path):
+    """Respuesta cuando no existe la pagina."""
+    return redirect("/not-found")
