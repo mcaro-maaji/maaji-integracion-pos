@@ -4,12 +4,12 @@ import asyncio
 import signal
 import lifecycle
 import auto
-import app
+from app import app, server
 
 async def main():
     """Ejecuta el proyecto."""
     # Crear las tareas a ejecutar del proyecto.
-    task_app = asyncio.create_task(app.server(app.app, app.config_server))
+    task_app = asyncio.create_task(server.serve(app.app, server.config))
     auto.sheduler.start()
 
     # Manejar el evento para cancelar la ejecicion del proyecto con una señal.
