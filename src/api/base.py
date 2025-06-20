@@ -1,7 +1,7 @@
 """Modulo base para crear la API de la aplicacion."""
 
 import json
-from quart import Blueprint, jsonify, request
+from quart import Blueprint, jsonify, request, Response
 from service import ServiceObj
 from service.types import is_service_params, ServiceParamError, ServiceResult
 
@@ -58,7 +58,11 @@ async def handle_post_services(service_obj: ServiceObj):
         parameterskv = params.get("parameterskv", {})
         result = await service_obj.run(*parameters, **parameterskv)
 
-    return result
+    data = result.get("data", None)
+    if isinstance(data, Response):
+        return data
+
+    return jsonify(result)
 
 def handle_not_method_service(__route: str):
     """Maneja los metodos que no son permitidos en los servicios."""

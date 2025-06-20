@@ -1,6 +1,7 @@
 """Modulo para definir devoluciones generales de los servicios."""
 
 from uuid import UUID
+from quart import Response
 from service.types import ServiceResult
 from service.decorator import services
 from service.operation import opt_return_default as _default
@@ -49,6 +50,16 @@ def exitstatus(value: int):
 @services.opt_return(type="[[string, string], ...]")
 def mapfields(value: list[tuple[str, str]]):
     """Devolucion de servicio con valor de MapFields."""
+    return ServiceResult({
+        "data": value,
+        "type": "[[string, string], ...]"
+    })
+
+@services.opt_return(type="object")
+def response(value: Response):
+    """Devolucion de servicio con una respuesta a una peticion HTTP."""
+    if not isinstance(value, Response):
+        raise TypeError("el valor debe ser de tipo Response")
     return ServiceResult({
         "data": value,
         "type": "[[string, string], ...]"
