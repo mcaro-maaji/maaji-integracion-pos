@@ -34,4 +34,4 @@ def getall(index: slice = None):
 
 service = services.service("shopify", create, getall, c.get, c.drop, c.pop, c.persistent,
                                    c.requiredfields, c.sortfields, c.fix, c.normalize, c.analyze,
-                                   c.autofix, c.fullfix, c.exceptions)
+                                   c.autofix, c.fullfix, c.exceptions, c.save)

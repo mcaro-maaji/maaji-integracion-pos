@@ -196,6 +196,45 @@ def exceptions(analysis: dict[tuple[str, str], list[int]], *, dataid: UUID):
     list_exception = clients.exceptions(analysis)
     return list_exception
 
+@services.operation(
+    params.dataid,
+    c.returns.exitstatus,
+    filedesc=c.params.filedesc,
+    converted=params.converted,
+    ftype=c.params.ftype,
+    delimeter=c.params.delimeter,
+    encoding=c.params.encoding,
+    orientjson=c.params.orientjson
+)
+def save(dataid: UUID,
+         /,
+         filedesc: str | bytes | PathLike | BufferedIOBase = None,
+         converted: bool = False,
+         ftype="csv",
+         delimeter="|",
+         encoding="utf-8",
+         orientjson="records"):
+    """Guarda los datos de los clientes."""
+    clients = _datafromid(dataid)
+    clients_data = clients.data if converted else clients.data_pos
+
+    if ftype == "clipboard":
+        clients_data.to_clipboard(sep=delimeter, encoding=encoding, index=False)
+        return 0
+
+    if not filedesc:
+        raise ValueError("el valor del parametro 'filedesc' no puede ser nulo.")
+
+    if ftype == "csv":
+        clients_data.to_csv(filedesc, sep=delimeter, index=False, encoding=encoding)
+    elif ftype == "excel":
+        clients_data.to_excel(filedesc, index=False)
+    elif ftype == "json":
+        clients_data.to_json(filedesc, orient=orientjson, index=False)
+    else:
+        raise ValueError("no se ha seleccionado el ftype correcto")
+    return 0
+
 service = services.service("cegid", create, getall, get, drop, pop, persistent,
                            requiredfields, sortfields, fix, normalize, analyze,
-                           autofix, fullfix, exceptions)
+                           autofix, fullfix, exceptions, save)
