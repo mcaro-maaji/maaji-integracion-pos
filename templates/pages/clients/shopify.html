@@ -1,0 +1,55 @@
+{% from "components/btnupload.html" import btnupload %}
+{% from "components/table.html" import table %}
+{% from "components/logsquare.html" import logsquare %}
+
+{% extends "layouts/main.html" %}
+
+{% set page_title = "Clientes Shopify" %}
+{% set navbar_title = "Gestion de Clientes > Shopify" %}
+
+{% block main_content %}
+<main class="container-fluid mt-3 px-5">
+    <div class="d-flex flex-row justify-content-between">
+        <div class="d-flex flex-row w-50 gap-3">
+            <div class="d-flex flex-row w-75">
+                <input type="text" class="form-control form-control-sm" id="in-filename-clients"
+                placeholder="Nombre de Archivo..." value="">
+            </div>
+            <div class="d-flex flex-row gap-3 w-50">
+                <select id="select-support-clients" class="form-control form-control-sm w-50" aria-label="Seleccionar formato.">
+                    <option selected value="csv">CSV</option>
+                    <option value="excel">EXCEL</option>
+                    <option value="json">JSON</option>
+                    <option value="clipboard">CLIPBOARD</option>
+                </select>
+                <div class="d-flex flex-row align-items-center gap-2 w-100">
+                    <label for="in-separator-clients" class="form-label mb-0">Separador:</label>
+                    <input type="text" class="form-control form-control-sm" id="in-separator-clients" placeholder="..." value="|">
+                    <select id="select-orientjson-clients" class="form-control form-control-sm w-auto d-none" aria-label="Seleccionar Orientacion JSON." hidden>
+                        <option selected value="records">REGISTROS</option>
+                        <option value="split">SEPARADO</option>
+                        <option value="columns">COLUMNAS</option>
+                        <option value="values">VALORES</option>
+                        <option value="table">TABLA</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex flex-row gap-1">
+            <button id="btnfullfix-table-clients" class="btn btn-success">Reparar</button>
+            <button id="btndownload-table-clients" class="btn btn-primary">Descargar</button>
+            <button id="btnclear-table-clients" class="btn btn-danger">Borrar</button>
+        </div>
+    </div>
+    <div class="my-3"></div>
+    {{ btnupload("btnupload-table-clients", height="26vmax") }}
+    {{ table("table-clients") }}
+    <div class="my-3"></div>
+    {{ logsquare("logsquare-table-clients", height="12vmax") }}
+    <input id="in-file-clients" type="file" class="d-none" />
+</main>
+<script type="module">
+    const script = new TemplateScript("pages/clients.mjs", { pos: "shopify" })
+    await script.exec()
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% macro logsquare(id_element, height="25vmax") %}
+<div id="{{ id_element }}" class="container-fluid d-flex flex-column align-items-center log-square overflow-auto">
+</div>
+<style>
+    .log-square {
+        height: {{ height }};
+        background-color: #e5e5e5;
+        border: 5px solid #d3d3d3;
+        border-radius: 5px;
+        cursor: text;
+    }
+</style>
+{% endmacro %}

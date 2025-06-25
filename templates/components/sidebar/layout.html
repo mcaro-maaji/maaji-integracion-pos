@@ -1,0 +1,74 @@
+{% macro sidebar(is_open=True) %}
+<div class="d-flex">
+    <div id="sidebar" class="bg-dark text-white p-3 d-flex flex-column {{ 'collapsed' if not is_open else '' }}">
+
+        <div class="container p-0">
+            <h5>Herramientas</h5>
+            <hr class="mt-2" />
+        </div>
+
+        {% include "components/sidebar/clients.html" %}
+
+        <div class="container p-0 mt-auto">
+            <hr class="mb-3" />
+            <a class="nav-link d-flex hover-color align-items-center" href="/configuration">
+                <img src="/static/icons/kit_tool_icon.ico" alt="client icon" height="25px" class="me-2" />
+                <h6 class="mb-0">Configuración</h6>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    #sidebar {
+        width: 300px;
+        height: calc(100vh - 56px);
+        position: fixed;
+        top: 56px;
+        transition: width 0.2s ease;
+        overflow-x: hidden;
+    }
+
+    .custom-btn:not(.collapsed) {
+        background-color: #f8f8f8;
+        border: 2px solid #f8f8f8;
+    }
+
+    #sidebar.collapsed {
+        width: 0 !important;
+        padding: 0 !important;
+    }
+
+    #sidebar.collapsed .accordion,
+    #sidebar.collapsed .container {
+        display: none;
+    }
+
+    /* Contenido principal se corre con sidebar expandido */
+    #mainContent {
+        margin-left: 300px;
+        max-width: 82.7vw;
+        transition: margin-left 0.2s ease;
+        padding: 1rem;
+    }
+
+    /* Cuando el sidebar está colapsado, el main se expande */
+    #mainContent.expanded {
+        margin-left: 0;
+        max-width: 100%;
+    }
+
+    .hover-color:hover {
+        color: #f2fc9e;
+    }
+
+    .bg-hover-color:hover {
+        background-color: #f2fc9e;
+    }
+</style>
+
+<script type="module">
+    const script = new TemplateScript("components/sidebar/layout.mjs")
+    await script.exec()
+</script>
+{% endmacro %}

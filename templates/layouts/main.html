@@ -1,0 +1,38 @@
+{% from "components/navbar.html" import navbar %}
+{% from "components/sidebar/layout.html" import sidebar %}
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title + ' |' if page_title else '' }} Maaji Integración POS</title>
+    <link rel="icon" href="/static/maaji_favicon.png" type="image/x-icon">
+    <!-- Bootstrap -->
+    <link href="/static/css/dependencies/bootstrap-5.3.6-dist/bootstrap.min.css" rel="stylesheet">
+    <!-- Tabulator -->
+    <link href="/static/css/dependencies/tabulator-master-6.3-dist/tabulator.min.css" rel="stylesheet">
+    <!-- Global Styles -->
+    <link href="/static/css/styles.css" rel="stylesheet">
+</head>
+
+<!-- Bootstrap JS -->
+<script src="/static/js/dependencies/bootstrap-5.3.6-dist/bootstrap.bundle.min.js"></script>
+<!-- TemplateScript JS -->
+<script type="module" src="/static/js/template.mjs" defer></script>
+
+<body>
+    <div class="container-fluid p-0 vh-100 scroll-invisible">
+        {{ navbar(navbar_title=navbar_title) }}
+
+        <div id="mainContent" class="container p-0 me-0 {{'' if sidebar_is_collapsed else 'expanded' }}">
+            {% block main_content %}
+            {% endblock %}
+        </div>
+
+        {{ sidebar(is_open=sidebar_is_collapsed) }}
+    </div>
+</body>
+
+</html>
