@@ -1,15 +1,15 @@
 """Modulo para definir parametros generales de los servicios."""
 
-from typing import TypeAlias, Literal
+from typing import Literal
 from uuid import UUID
-from io import BytesIO, BufferedIOBase
+from io import BytesIO
 from os import PathLike, fsdecode
 from pathlib import Path
 from codecs import lookup as lookup_codec
 from pandas import Series
-from werkzeug.datastructures import FileStorage
 from service.decorator import services
 from service.parameters import ServiceOptParameter, P, R
+from utils.typing import JsonFrameOrient, ListJsonFrameOrient, REPR_JSONFRAME_ORIENT
 
 @services.parameter(type="string")
 def string(value: str):
@@ -54,25 +54,23 @@ def index(value: int | tuple[int, int, int]):
     raise TypeError("los valores de los indices deben ser numeros.")
 
 @services.parameter(type="string[PathLike]")
-def fpath(value: str | bytes | PathLike):
+def path(value: str | bytes | PathLike):
     """Parametro que recibe la ruta de un archivo."""
     if not value:
         raise TypeError("el valor debe ser de tipo 'string[PathLike]' y no vacio.")
-    path = Path(fsdecode(value))
-    if not path.is_file():
+    value = Path(fsdecode(value))
+    if not value.is_file():
         raise FileNotFoundError(f"archivo no encontrado en la ruta: {value}")
-    return path
-
-@services.parameter(type="'csv'|'excel'|'json'|'clipboard'")
-def ftype(value: str):
-    """Parametro para validar el mimetype permitidos por los servicios."""
-    if value in ["csv", "excel", "json", "clipboard"]:
-        return value
-    raise ValueError("se debe elegir el alguno de estos ftype: 'csv'|'excel'|'json'|'clipboard'")
+    return value
 
 @services.parameter(type="string")
 def delimeter(value):
-    """Parametro que recibe el delimitador al leer un archivo."""
+    """Parametro que recibe el delimitador al leer un set de datos."""
+    return raw(value)
+
+@services.parameter(type="string")
+def sep(value):
+    """Parametro que recibe el separador al leer un set de datos."""
     return raw(value)
 
 @services.parameter(type="string")
@@ -91,17 +89,13 @@ def bufferbytes(value: str, _encoding: str = "uft-8"):
     _encoding = encoding(_encoding)
     return BytesIO(value.encode(_encoding))
 
-JsonFrameOrient: TypeAlias = Literal[
-    "split", "records", "index", "columns", "values", "table"
-]
-
-@services.parameter(type="'split'|'records'|'index'|'columns'|'values'|'table'")
+@services.parameter(type=REPR_JSONFRAME_ORIENT)
 def orientjson(value: JsonFrameOrient):
     """Parametro que indica la orientacion del json."""
     value = raw(value)
-    if value in ["split", "records", "index", "columns", "values", "table"]:
+    if value in ListJsonFrameOrient:
         return value
-    raise ValueError("se debe elegir el alguno de los JsonFrameOrient.")
+    raise ValueError("se debe elegir el alguno de los valores: " + REPR_JSONFRAME_ORIENT)
 
 @services.parameter(type="'columns'|'rows'")
 def axis(value: Literal["columns", "rows"]):
@@ -131,26 +125,3 @@ def series(value: list[object]):
     """Parametro que convierte el valor en uno tipo pandas.Series"""
     value = arraylist(value)
     return Series(value)
-
-@services.parameter(type="'raw'|'path'|'buffer'|'file'|'clipboard'")
-def datafrom(value: Literal["raw", "path", "buffer", "file"]):
-    """Parametro que valida que el valor sea el nombre de un metodo para importar informacion."""
-    value = raw(value)
-    datafrom_support = ["raw", "path", "buffer", "file", "clipboard"]
-    if value in datafrom_support:
-        return value
-    raise ValueError(f"se debe elegir el alguno de estos datafrom: {datafrom_support}")
-
-@services.parameter(type="string | string[Path] | string[Request.KeyPayload]")
-def filedesc(value: str | bytes | PathLike | BufferedIOBase | FileStorage):
-    """Parametro que comprueba el valor sea la descripcion de un archivo."""
-    if isinstance(value, (str, bytes, PathLike, BufferedIOBase, FileStorage)):
-        return value
-    msg = "el valor debe ser de tipo 'string | string[Path] | string[Request.KeyPayload]'"
-    raise TypeError(msg)
-
-@services.parameter(type="'raw'|'path'|'buffer'|'file'|'clipboard'")
-def datato(value: Literal["raw", "path", "buffer", "file", "clipboard"]):
-    """Parametro que valida que el valor sea el nombre de un metodo para exportar informacion."""
-    value = datafrom(value)
-    return value
