@@ -195,13 +195,13 @@ def exceptions(analysis: dict[tuple[str, str], list[int]], *, dataid: UUID):
     excel=clients.params.excel,
     index=clients.params.index
 )
-async def save(dataid: UUID,
-               /,
-               destination: DataIO | None = None,
-               support: SupportDataIO = "csv",
-               mode: ModeDataIO = "raw",
-               fixed=False,
-               **kwargs: ...):
+def save(dataid: UUID,
+         /,
+         destination: DataIO | None = None,
+         support: SupportDataIO = "csv",
+         mode: ModeDataIO = "raw",
+         fixed=False,
+         **kwargs: ...):
     """Guarda los datos de los clientes."""
     clients_pos = _datafromid(dataid)
     clients_pos.destination = destination
