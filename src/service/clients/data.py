@@ -2,16 +2,19 @@
 
 from uuid import UUID
 from datetime import timedelta
-from db.datastore import DataStore
-from utils.typing import FilePath, ReadBuffer, ReadCsvBuffer
+from quart import has_request_context, request
+from quart.datastructures import FileStorage
+from werkzeug.exceptions import BadRequestKeyError, InternalServerError
+from data.store import DataStore
+from data.io import DataIO, SupportDataIO, ModeDataIO
+from service import mapfields
 from core.clients import (
     ClientsPOS as _ClientsPOS,
     ClientsCegid,
     ClientsShopify,
-    MAPFIELDS_POS_CEGID,
-    MAPFIELDS_POS_SHOPIFY_MX
+    MAPFIELDS_CLIENTS_POS_CEGID,
+    MAPFIELDS_CLIENTS_POS_SHOPIFY
 )
-import service.mapfields as m
 
 DS_CLIENTS_POS: DataStore[_ClientsPOS[str]] = DataStore(
     max_length=7,                         # 7 sitios disponibles para crear data Clients.
@@ -27,37 +30,57 @@ def ds_clients_pos_calc_size(clients: _ClientsPOS[str]):
 
 DS_CLIENTS_POS.calc_size = ds_clients_pos_calc_size
 
-def create(fpath_or_buffer: FilePath | ReadBuffer | ReadCsvBuffer,
-           /,
-           pos: str = "cegid",
-           dataid: UUID = None,
-           ftype: str = "csv",
-           delimeter: str = "|",
-           encoding: str = "utf-8",
-           idmapfields: UUID = None,
-           force: bool = False):
+async def source_from_request(source: DataIO, mode: ModeDataIO):
+    """Obtiene un fileio desde un contexto de request."""
+    if mode == "request":
+        if not has_request_context():
+            raise InternalServerError("no hay contexto de un request HTTP")
+
+        payload = "payload.files"
+        if isinstance(source, str):
+            payload = source
+
+        source: FileStorage = (await request.files).get(payload)
+
+        if not source:
+            msg = "no se ha encontrado el archivo en la peticion con paylaod/key: " + payload
+            raise BadRequestKeyError(msg)
+
+    return source
+
+async def create(*,
+                 source: DataIO = None,
+                 support: SupportDataIO = "csv",
+                 mode: ModeDataIO = "raw",
+                 pos: str = "cegid",
+                 dataid: UUID = None,
+                 force: bool = False,
+                 idmapfields: UUID = None,
+                 **kwargs: ...):
     """Crea una instancia de ClientsPOS y la guarda en un DataStore, devuelve el ID."""
 
     if pos == "cegid":
         ClientsPOS = ClientsCegid
-        default_mapfields = MAPFIELDS_POS_CEGID
+        default_mapfields = MAPFIELDS_CLIENTS_POS_CEGID
     elif pos == "shopify":
         ClientsPOS = ClientsShopify
-        default_mapfields = MAPFIELDS_POS_SHOPIFY_MX
+        default_mapfields = MAPFIELDS_CLIENTS_POS_SHOPIFY
     else:
         raise ValueError("no se ha seleccionado un POS valido.")
 
     if not idmapfields is None:
-        mapfields = m.clients.get(idmapfields)
+        value_mapfields = mapfields.clients.get(idmapfields)
     else:
-        mapfields = default_mapfields
+        value_mapfields = default_mapfields
+
+    source = await source_from_request(source, mode)
 
     data = ClientsPOS(
-        fpath_or_buffer,
-        ftype=ftype,
-        delimiter=delimeter,
-        encoding=encoding,
-        mapfields=mapfields
+        value_mapfields,
+        source=source,
+        support=support,
+        mode=mode,
+        **kwargs
     )
 
     if not isinstance(dataid, UUID) and not dataid is None:

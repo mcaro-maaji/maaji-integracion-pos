@@ -1,114 +1,93 @@
 """Modulo para tener un servicio de los datos Clients CEGID: core.clients.pos_cegid"""
 
 from uuid import UUID
-from io import BufferedIOBase, BytesIO
-from os import PathLike
-from quart import request, has_request_context
-from werkzeug.datastructures import FileStorage
-from service.types import ServiceError
+from data.io import DataIO, SupportDataIO, ModeDataIO
+from core.clients import (
+    ClientsCegid,
+    ClientsShopify
+)
 from service.decorator import services
-from service.clients import data, params, returns
-import service.common as c
-import service.mapfields as m
+from service import common, mapfields, data, clients
+from utils.typing import JsonFrameOrient
 
 @services.operation(
-    c.params.optional(c.params.filedesc),
-    c.returns.uuid,
-    datafrom=c.params.datafrom,
-    ftype=c.params.ftype,
-    dataid=params.dataid,
-    delimeter=c.params.delimeter,
-    encoding=c.params.encoding,
-    idmapfields=m.params.dataid,
-    force=params.force
+    common.params.optional(data.params.source),
+    common.returns.uuid,
+    support=data.params.support,
+    mode=data.params.mode,
+    dataid=clients.params.dataid,
+    idmapfields=mapfields.params.dataid,
+    force=clients.params.force,
+    encoding=common.params.encoding,
+    delimeter=common.params.delimeter,
+    sep=common.params.sep,
+    orient=common.params.orientjson
 )
-async def create(filedesc: str | bytes | PathLike | BufferedIOBase = None,
+async def create(source: DataIO = None,
                  /,
-                 pos="cegid",
-                 datafrom="raw",
+                 support: SupportDataIO = "csv",
+                 mode: ModeDataIO = "raw",
+                 pos: str = "cegid",
                  dataid: UUID = None,
-                 ftype="csv",
-                 delimeter="|",
-                 encoding="utf-8",
                  idmapfields: UUID = None,
-                 force=False):
+                 force: bool = False,
+                 **kwargs: ...):
     """Crea los datos de los clientes CEGID."""
-    if datafrom == "raw":
-        if not isinstance(filedesc, BufferedIOBase):
-            if not isinstance(filedesc, str):
-                raise ServiceError("el parametro 'filedesc' debe ser de tipo string")
-            raw_bytes = filedesc.encode(encoding)
-            filedesc = BytesIO(raw_bytes)
-    elif datafrom == "path":
-        c.params.fpath(filedesc)
-    elif datafrom == "file":
-        if not isinstance(filedesc, str):
-            filedesc = "payload.files"
-        if not has_request_context():
-            raise ServiceError("no se ha leido la peticion al servicio correctamente")
-
-        filedesc: FileStorage = (await request.files).get(filedesc)
-        if not filedesc:
-            raise ServiceError("no hay archivo en la peticion del servicio")
-
-    uuid = data.create(
-        filedesc,
+    uuid = await clients.data.create(
+        source=source,
+        support=support,
+        mode=mode,
         pos=pos,
         dataid=dataid,
-        ftype=ftype,
-        delimeter=delimeter,
-        encoding=encoding,
         idmapfields=idmapfields,
-        force=force
+        force=force,
+        **kwargs
     )
     return uuid
 
-@services.operation(c.params.index, c.returns.uuids)
+@services.operation(common.params.index, common.returns.uuids)
 def getall(index: slice = None, /, pos="cegid"):
     """Obtener todos los IDs de datos de los clientes CEGID."""
     if index is None:
         index = slice(None, None)
 
-    pos = params.pos(pos)
+    pos = clients.params.pos(pos)
     if pos == "shopify":
-        ClientsPOS = data.ClientsShopify
+        ClientsPOS = ClientsShopify
     else:
-        ClientsPOS = data.ClientsCegid
+        ClientsPOS = ClientsCegid
 
-    list_ids = [k for k, v in data.DS_CLIENTS_POS.items() if isinstance(v, ClientsPOS)]
+    list_ids = [k for k, v in clients.data.DS_CLIENTS_POS.items() if isinstance(v, ClientsPOS)]
     return list_ids[index]
 
 def _datafromid(dataid: UUID, /):
     try:
-        clients = data.DS_CLIENTS_POS[dataid]
+        clients_pos = clients.data.DS_CLIENTS_POS[dataid]
     except KeyError as err:
         msg = "no se ha encontrado los datos de los clientes con el UUID proporcionado."
         raise KeyError(msg) from err
-    return clients
+    return clients_pos
 
 @services.operation(
-    params.dataid,
-    returns.datajson,
-    converted=params.converted,
-    orientjson=c.params.orientjson
+    clients.params.dataid,
+    clients.returns.datajson,
+    fixed=clients.params.fixed,
+    orientjson=common.params.orientjson
 )
-def get(dataid: UUID,
-        /,
-        converted: bool = False,
-        orientjson: c.params.JsonFrameOrient = "records"):
+def get(dataid: UUID, /, fixed: bool = False, orientjson: JsonFrameOrient = None):
     """Obtener los datos de los clientes mediante el ID."""
-    clients = _datafromid(dataid)
-    return clients, converted, orientjson
+    clients_pos = _datafromid(dataid)
+    return clients_pos, fixed, orientjson
 
-@services.operation(params.dataid, c.returns.exitstatus)
+@services.operation(clients.params.dataid, common.returns.exitstatus)
 def drop(dataid: UUID, /):
     """Elimina toda la informacion de los clientes"""
-    clients = _datafromid(dataid)
-    clients.data.drop(clients.data.index, inplace=True, errors="ignore")
-    clients.data_pos.drop(clients.data_pos.index, inplace=True, errors="ignore")
-    return 0
+    clients_pos = _datafromid(dataid)
+    clients_pos.data.drop(clients_pos.data.index, inplace=True, errors="ignore")
+    clients_pos.data_pos.drop(clients_pos.data_pos.index, inplace=True, errors="ignore")
+    return 0, "se han eliminado los datos ClientsPOS"
 
-@services.operation(c.params.optional(params.dataid), c.returns.exitstatus)
+@services.operation(common.params.optional(clients.params.dataid), common.returns.exitstatus)
 def pop(dataid: UUID = None, /):
     """Elimina la data de los clientes segun el identificador, sin este se elimina el ultimo."""
     if dataid is None:
@@ -119,121 +98,115 @@ def pop(dataid: UUID = None, /):
 
     drop(dataid)
 
-    if dataid in data.DS_CLIENTS_POS:
-        data.DS_CLIENTS_POS.pop(dataid)
-    if dataid in data.DS_CLIENTS_POS.persistent:
-        data.DS_CLIENTS_POS.persistent.remove(dataid)
-    return 0
+    if dataid in clients.data.DS_CLIENTS_POS:
+        clients.data.DS_CLIENTS_POS.pop(dataid)
+    if dataid in clients.data.DS_CLIENTS_POS.persistent:
+        clients.data.DS_CLIENTS_POS.persistent.remove(dataid)
+    return 0, "se ha quitado los datos ClientsPOS de la cache"
 
-@services.operation(params.dataid, c.returns.exitstatus)
+@services.operation(clients.params.dataid, common.returns.exitstatus)
 def persistent(dataid: UUID, /):
     """Agregar el ID de los datos a los persistentes."""
     _datafromid(dataid)
-    if dataid not in data.DS_CLIENTS_POS.persistent:
-        data.DS_CLIENTS_POS.persistent.append(dataid)
+    if dataid not in clients.data.DS_CLIENTS_POS.persistent:
+        clients.data.DS_CLIENTS_POS.persistent.append(dataid)
     else:
-        data.DS_CLIENTS_POS.persistent.remove(dataid)
-    return 0
+        clients.data.DS_CLIENTS_POS.persistent.remove(dataid)
+    return 0, "se han hecho persistente los datos ClientsPOS"
 
-@services.operation(params.dataid, c.returns.mapfields)
+@services.operation(clients.params.dataid, common.returns.mapfields)
 def requiredfields(dataid: UUID, /):
     """Busca los nombres de los campos que no existen y son requeridos."""
-    clients = _datafromid(dataid)
-    return list(clients.no_match_fields())
+    clients_pos = _datafromid(dataid)
+    return list(clients_pos.no_match_fields())
 
 @services.operation(
-    c.params.optional(m.params.fields),
-    c.returns.exitstatus,
-    dataid=params.dataid
+    common.params.optional(mapfields.params.fields),
+    common.returns.exitstatus,
+    dataid=clients.params.dataid
 )
 def sortfields(fields: list[str] = None, *, dataid: UUID):
     """Ordena los campos segun el nombre."""
-    clients = _datafromid(dataid)
-    if not fields is None:
-        fields = set(fields)
-    clients.sort_fields(fields)
-    return 0
+    clients_pos = _datafromid(dataid)
+    clients_pos.sort_fields(fields)
+    return 0, "se han organizado los campos de los datos ClientsPOS"
 
-@services.operation(params.dataupdate, c.returns.exitstatus, dataid=params.dataid)
+@services.operation(
+    clients.params.dataupdate,
+    common.returns.exitstatus,
+    dataid=clients.params.dataid
+)
 def fix(dataupdate: dict[tuple[str, str], list[object]], *, dataid: UUID):
     """Cambia la informacion utilizando los MapFields como columna y los valores como las filas."""
-    clients = _datafromid(dataid)
-    clients.fix({k: c.params.series(v) for k, v in dataupdate.items()})
-    return 0
+    clients_pos = _datafromid(dataid)
+    clients_pos.fix({k: common.params.series(v) for k, v in dataupdate.items()})
+    return 0, "se han reparado los datos ClientsPOS"
 
-@services.operation(params.dataid, c.returns.exitstatus)
+@services.operation(clients.params.dataid, common.returns.exitstatus)
 def normalize(dataid: UUID, /):
     """Normaliza los datos de los clientes."""
-    clients = _datafromid(dataid)
-    clients.normalize()
-    return 0
+    clients_pos = _datafromid(dataid)
+    clients_pos.normalize()
+    return 0, "se han normalizado los datos ClientsPOS"
 
-@services.operation(params.dataid, returns.analysis)
+@services.operation(clients.params.dataid, clients.returns.analysis)
 def analyze(dataid: UUID, /):
     """Normaliza los datos de los clientes."""
-    clients = _datafromid(dataid)
-    analysis = clients.analyze()
+    clients_pos = _datafromid(dataid)
+    analysis = clients_pos.analyze()
     return analysis
 
-@services.operation(params.analysis, c.returns.exitstatus, dataid=params.dataid)
+@services.operation(clients.params.analysis, common.returns.exitstatus, dataid=clients.params.dataid)
 def autofix(analysis: dict[tuple[str, str], list[int]], *, dataid: UUID):
     """Autorepara los datos de los clientes, mediante un analisis previo."""
-    clients = _datafromid(dataid)
-    clients.autofix(analysis)
-    return 0
+    clients_pos = _datafromid(dataid)
+    clients_pos.autofix(analysis)
+    return 0, "se han auto reparado los datos ClientsPOS"
 
-@services.operation(params.dataid, returns.analysis)
+@services.operation(clients.params.dataid, clients.returns.analysis)
 def fullfix(dataid: UUID, /):
     """Autorepara completamente los datos de los clientes."""
-    clients = _datafromid(dataid)
-    analysis = clients.fullfix()
+    clients_pos = _datafromid(dataid)
+    analysis = clients_pos.fullfix()
     return analysis
 
-@services.operation(params.analysis, returns.exceptions, dataid=params.dataid)
+@services.operation(
+    clients.params.analysis,
+    clients.returns.exceptions,
+    dataid=clients.params.dataid
+)
 def exceptions(analysis: dict[tuple[str, str], list[int]], *, dataid: UUID):
     """Obtiene todos los errores encontrados de los datos de los clientes."""
-    clients = _datafromid(dataid)
-    list_exception = clients.exceptions(analysis)
+    clients_pos = _datafromid(dataid)
+    list_exception = clients_pos.exceptions(analysis)
     return list_exception
 
 @services.operation(
-    params.dataid,
-    c.returns.exitstatus,
-    filedesc=c.params.filedesc,
-    converted=params.converted,
-    ftype=c.params.ftype,
-    delimeter=c.params.delimeter,
-    encoding=c.params.encoding,
-    orientjson=c.params.orientjson
+    clients.params.dataid,
+    common.returns.exitstatus,
+    destination=data.params.destination,
+    support=data.params.support,
+    mode=data.params.mode,
+    fixed=clients.params.fixed,
+    encoding=common.params.encoding,
+    delimeter=common.params.delimeter,
+    sep=common.params.sep,
+    orient=common.params.orientjson,
+    excel=clients.params.excel,
+    index=clients.params.index
 )
-def save(dataid: UUID,
-         /,
-         filedesc: str | bytes | PathLike | BufferedIOBase = None,
-         converted: bool = False,
-         ftype="csv",
-         delimeter="|",
-         encoding="utf-8",
-         orientjson="records"):
+async def save(dataid: UUID,
+               /,
+               destination: DataIO | None = None,
+               support: SupportDataIO = "csv",
+               mode: ModeDataIO = "raw",
+               fixed=False,
+               **kwargs: ...):
     """Guarda los datos de los clientes."""
-    clients = _datafromid(dataid)
-    clients_data = clients.data if converted else clients.data_pos
-
-    if ftype == "clipboard":
-        clients_data.to_clipboard(sep=delimeter, encoding=encoding, index=False)
-        return 0
-
-    if not filedesc:
-        raise ValueError("el valor del parametro 'filedesc' no puede ser nulo.")
-
-    if ftype == "csv":
-        clients_data.to_csv(filedesc, sep=delimeter, index=False, encoding=encoding)
-    elif ftype == "excel":
-        clients_data.to_excel(filedesc, index=False)
-    elif ftype == "json":
-        clients_data.to_json(filedesc, orient=orientjson, index=False)
-    else:
-        raise ValueError("no se ha seleccionado el ftype correcto")
-    return 0
+    clients_pos = _datafromid(dataid)
+    clients_pos.destination = destination
+    clients_pos.save(support, mode, fixed=fixed, **kwargs)
+    return 0, "se ha guardado la informacion ClientsPOS"
 
 service = services.service("cegid", create, getall, get, drop, pop, persistent,
                            requiredfields, sortfields, fix, normalize, analyze,
