@@ -44,7 +44,7 @@ export const services = {
             create: new ApiServices("clients/cegid/create"),
             /** @type {ApiServices<string[]>} */
             getall: new ApiServices("clients/cegid/getall"),
-            /** @type {ApiServices<Api.JsonValue[] | { [x: string]: Api.JsonValue }>} */
+            /** @type {ApiServices<Api.JsonValue[] | string>} */
             get: new ApiServices("clients/cegid/get"),
             /** @type {ApiServices<number>} */
             drop: new ApiServices("clients/cegid/drop"),
@@ -76,7 +76,7 @@ export const services = {
             create: new ApiServices("clients/shopify/create"),
             /** @type {ApiServices<string[]>} */
             getall: new ApiServices("clients/shopify/getall"),
-            /** @type {ApiServices<Api.JsonValue[] | { [x: string]: Api.JsonValue }>} */
+            /** @type {ApiServices<Api.JsonValue[] | string>} */
             get: new ApiServices("clients/shopify/get"),
             /** @type {ApiServices<number>} */
             drop: new ApiServices("clients/shopify/drop"),
