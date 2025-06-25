@@ -2,9 +2,9 @@
 
 from uuid import UUID
 from datetime import timedelta
-from core.clients import MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX
+from core.clients import MAPFIELDS_CLIENTS_POS_CEGID, MAPFIELDS_CLIENTS_POS_SHOPIFY
 from core.mapfields import MapFields
-from db.datastore import DataStore
+from data.store import DataStore
 from service.decorator import services
 from service.mapfields import operations as opt
 
@@ -14,7 +14,10 @@ DS_MAPFIELDS_CLIENTS: DataStore[MapFields] = DataStore(
     max_duration=timedelta(minutes=70)    # 10 minutos cada item
 )
 
-default_mapfields = DS_MAPFIELDS_CLIENTS.extend(MAPFIELDS_POS_CEGID, MAPFIELDS_POS_SHOPIFY_MX)
+default_mapfields = DS_MAPFIELDS_CLIENTS.extend(
+    MAPFIELDS_CLIENTS_POS_CEGID,
+    MAPFIELDS_CLIENTS_POS_SHOPIFY
+)
 DS_MAPFIELDS_CLIENTS.persistent.extend(default_mapfields)
 
 @services.operation(opt.create.opt_return, *opt.create.parameters, **opt.create.parameterskv)
