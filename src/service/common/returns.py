@@ -35,16 +35,19 @@ def uuids(value: list[UUID]):
         "type": "[string[UUID], ...]"
     })
 
-@services.opt_return(type="ExitStatus[number]")
-def exitstatus(value: int):
+@services.opt_return(type="string[ExitStatus]")
+def exitstatus(value: int | str | tuple[int, str]):
     """Devolucion de servicio que indica el estado devuelto de la operacion con un numero."""
-    if isinstance(value, int):
-        status = value
+    if isinstance(value, (int, str)):
+        status = str(value)
+    elif isinstance(value, tuple) and len(value) == 2:
+        num, msg = value
+        status = f"code: {num} | message: '{msg}'"
     else:
-        status = int(not bool(value))
+        status = str(int(not bool(value)))
     return ServiceResult({
         "data": status,
-        "type": "ExitStatus[number]"
+        "type": "string[ExitStatus]"
     })
 
 @services.opt_return(type="[[string, string], ...]")
