@@ -2,7 +2,7 @@
 
 from typing import TypeVar, Generic
 from collections import UserDict
-from utils.typing import is_dict_str
+from utils.typing import is_dict_string
 from .mapfunc import MapFieldFunc
 
 _KP = TypeVar("_KP", bound=str) # key primary
@@ -14,7 +14,7 @@ class MapData(UserDict):
 
     def __init__(self, *args: str, func: MapFieldFunc, **kwargs: str):
         super().__init__(*args, **kwargs)
-        if not is_dict_str(self.data):
+        if not is_dict_string(self.data):
             raise TypeError("MapData es de tipo 'dict[str, str]]'")
         self.__mapfunc = func
 
