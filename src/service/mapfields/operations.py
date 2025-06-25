@@ -1,7 +1,7 @@
 """Modulo para manejar las operaciones comunes del servicio de MapFields."""
 
 from uuid import UUID
-from db.datastore import DataStore
+from data.store import DataStore
 from core.mapfields import MapFields
 from service.decorator import services
 from service.mapfields import params, returns
