@@ -1,0 +1,39 @@
+{% macro table(id) %}
+<div id="{{ id }}" class="table-theme"></div>
+<style>
+    /*Theme the Tabulator element*/
+    .table-theme{
+        background-color: #f8f8f8;
+        border: 5px solid #d3d3d3;
+        border-radius: 8px;
+    }
+
+    /*Theme the header*/
+    .table-theme .tabulator-header {
+        background-color: #f8f8f8;
+        color:#fff;
+    }
+    
+    .table-theme .tabulator-header .tabulator-col {
+        background-color: #f2fc9e;
+        color: #212529;
+    }
+
+    /*Allow column header names to wrap lines*/
+    .table-theme .tabulator-header .tabulator-col,
+    .table-theme .tabulator-header .tabulator-col-row-handle {
+        white-space: normal;
+    }
+
+    /*Color the table rows*/
+    .table-theme .tabulator-tableholder .tabulator-table .tabulator-row,
+    .table-theme .tabulator-tableholder .tabulator-table .tabulator-row:nth-child(even) {
+        background-color: #e5e5e5;
+        color: #212529;
+        border-bottom: 1px solid #aaa;
+    }
+    .table-theme .tabulator-tableholder .tabulator-table .tabulator-row:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endmacro %}
