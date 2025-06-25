@@ -1,21 +1,16 @@
 """Modulo para la lectura, analisis y correccion de clientes."""
 
-from typing import Literal
 from datetime import datetime
 from pandas import (
     DataFrame,
-    read_excel,
-    read_csv,
-    read_json,
-    ExcelFile,
     Index,
     MultiIndex,
     Series,
     concat as pandas_concat
 )
-from utils.typing import FilePath, ReadBuffer, ReadCsvBuffer
-from .fields import ClientField
-from .municipios import DaneField, DANE_MUNICIPIOS
+from data.io import BaseDataIO, DataIO, SupportDataIO, ModeDataIO
+from .fields import ClientField, DaneField
+from .municipios import DANE_MUNICIPIOS
 from .exceptions import (
     ClientsException,
     ClientsWarning,
@@ -25,42 +20,21 @@ from .exceptions import (
     WARNING_MAX_CLIENTS
 )
 
-class Clients:
+class Clients(BaseDataIO):
     """Clase para la gestion de datos de los clientes."""
-    __data: DataFrame
 
     def __init__(self,
-                 filepath_or_buffer: FilePath | ReadBuffer | ExcelFile | ReadCsvBuffer,
                  *,
-                 ftype: Literal["excel", "csv", "json"] = "csv",
-                 delimiter="|",
-                 encoding="utf-8"):
-        """Gestionar la informacion de los clientes en formato CSV, JSON y Excel."""
-        if ftype == "excel":
-            self.__data = read_excel(filepath_or_buffer, dtype=str)
-        elif ftype == "csv":
-            self.__data = read_csv(filepath_or_buffer,
-                                   delimiter=delimiter,
-                                   dtype=str,
-                                   encoding=encoding)
-        elif ftype == "json":
-            self.__data = read_json(filepath_or_buffer, dtype=str, encoding=encoding)
-        else:
-            raise TypeError("el tipo de archivo es incorrecto.")
-        self.__data = self.__data.fillna("")
+                 source: DataIO = None,
+                 destination: DataIO = None,
+                 support: SupportDataIO = "csv",
+                 mode: ModeDataIO = "object",
+                 **kwargs: ...):
+        """Crea un dataframe manipulable para la inforamcion de los clientes."""
 
-    @property
-    def data(self):
-        """DataFrame de los clientes."""
-        return self.__data
-
-    @data.setter
-    def data(self, value: DataFrame):
-        """Establecer un nuevo set de clientes."""
-
-        if not isinstance(value, DataFrame):
-            raise TypeError("el valor no es un DataFrame.")
-        self.__data = value
+        super().__init__(source, destination, support, mode)
+        self.load(dtype=str, **kwargs)          # Lectura de datos siempre en String
+        self.data.fillna("", inplace=True)
 
     def no_match_fields(self):
         """Comprueba los campos que NO existen en el DataFrame."""
@@ -76,6 +50,7 @@ class Clients:
         """Organiza los campos de los clientes y elimina los incorrectos."""
         if not fields:
             fields = list(ClientField)
+        fields = list(dict.fromkeys(fields)) # Campos unicos y ordenados
         self.data = self.data[fields]
 
     def fix(self, data: dict[ClientField, Series]):

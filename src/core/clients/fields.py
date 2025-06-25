@@ -148,7 +148,13 @@ class ClientField(StrEnum):
     DEPARTAMENTO = "DEPARTAMENTO"
     DIVISA = "DIVISA"
 
-class ClientFieldShopifyMx(StrEnum):
+class DaneField(StrEnum):
+    """Campos de las columnas sobre los codigos postales de la DANE Colombia."""
+    DEPARTAMENTO = "DEPARTAMENTO"
+    CODIGO_POSTAL = "CODIGO_POSTAL"
+    MUNICIPIO = "MUNICIPIO"
+
+class ClientFieldShopify(StrEnum):
     """Mapeo de campos o nombre de las columnas de los clientes de Shopify App Matrixify."""
     ID = "ID"
     EMAIL = "Email"
@@ -218,4 +224,3 @@ class ClientShopifyJson:
     phone: str
     default_address: ClientShopifyJsonAddress
     metafields: list[ClientShopifyJsonMetaField] = dataclass_field(default_factory=list)
-    

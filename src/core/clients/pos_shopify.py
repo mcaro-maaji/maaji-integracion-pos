@@ -1,25 +1,15 @@
 """Modulo para organizar la inforamcion de los clientes segun el Sistema POS de CEGID Y2 Retail."""
 
-from typing import LiteralString
-from io import StringIO
 from datetime import datetime
-from pandas import DataFrame
 from core.mapfields import MapFields
-from utils.json import from_json
-from utils.dataclass import dict_to_dtcls
-from utils.typing import FilePath, ReadBuffer
+from .fields import ClientField, ClientFieldShopify
 from .pos import ClientsPOS
-from .fields import (
-    ClientField as CF, ClientFieldShopifyMx as CFSM,
-    ClientShopifyJson as CSJ, ClientShopifyJsonAddress as CSJA,
-    ClientShopifyJsonMetaField as CSJM
-)
 
-class ClientsShopify(ClientsPOS[CFSM]):
+class ClientsShopify(ClientsPOS[ClientFieldShopify]):
     """Clientes que se manejan en SHOPIFY POS."""
 
     __date_format: str = "%Y-%m-%d %H:%M:%S %z"
-    __fields_apostrophe: set[CFSM] = {CFSM.PHONE, CFSM.ADDRESS_PHONE}
+    __fields_apostrophe = {ClientFieldShopify.PHONE, ClientFieldShopify.ADDRESS_PHONE}
 
     @property
     def date_format(self):
@@ -58,7 +48,7 @@ class ClientsShopify(ClientsPOS[CFSM]):
                 self.data_pos[field] = self.data_pos[field].str.removeprefix("'")
 
         # Formato de fechas
-        fields_date = {CFSM.CREATED_AT}
+        fields_date = {ClientFieldShopify.CREATED_AT}
 
         def format_date(value: str):
             try:
@@ -71,137 +61,82 @@ class ClientsShopify(ClientsPOS[CFSM]):
                 self.data_pos[field_date] = self.data_pos[field_date].apply(format_date)
 
         # Nombres
-        in_field_second_name = CFSM.SECOND_NAME in self.data_pos
-        in_field_second_lname = CFSM.SECOND_LAST_NAME in self.data_pos
-        if CFSM.FIRST_NAME in self.data_pos and not in_field_second_name:
-            df_name = self.data_pos[CFSM.FIRST_NAME].str.split(n=1, expand=True).fillna("")
+        in_field_second_name = ClientFieldShopify.SECOND_NAME in self.data_pos
+        in_field_second_lname = ClientFieldShopify.SECOND_LAST_NAME in self.data_pos
+
+        if ClientFieldShopify.FIRST_NAME in self.data_pos and not in_field_second_name:
+            df_name = self.data_pos[ClientFieldShopify.FIRST_NAME]
+            df_name = df_name.str.split(n=1, expand=True).fillna("")
+
             if not 1 in df_name:
                 df_name[1] = ""
-            self.data_pos[[CFSM.FIRST_NAME, CFSM.SECOND_NAME]] = df_name
-        if CFSM.LAST_NAME in self.data_pos and not in_field_second_lname:
-            df_lname = self.data_pos[CFSM.LAST_NAME].str.split(n=1, expand=True).fillna("")
+
+            mf_name = [ClientFieldShopify.FIRST_NAME, ClientFieldShopify.SECOND_NAME]
+            self.data_pos[mf_name] = df_name
+
+        if ClientFieldShopify.LAST_NAME in self.data_pos and not in_field_second_lname:
+            df_lname = self.data_pos[ClientFieldShopify.LAST_NAME]
+            df_lname = df_lname.str.split(n=1, expand=True).fillna("")
+
             if not 1 in df_lname:
                 df_lname[1] = ""
-            self.data_pos[[CFSM.LAST_NAME, CFSM.SECOND_LAST_NAME]] = df_lname
+
+            mf_lname = [ClientFieldShopify.LAST_NAME, ClientFieldShopify.SECOND_LAST_NAME]
+            self.data_pos[mf_lname] = df_lname
 
         # Telefonos
-        fields_phone = {CFSM.PHONE, CFSM.ADDRESS_PHONE}
+        fields_phone = {ClientFieldShopify.PHONE, ClientFieldShopify.ADDRESS_PHONE}
         for field in fields_phone:
             if field in self.data_pos:
                 self.data_pos[field] = self.data_pos[field].str.removeprefix("+57")
 
         # Union Direcciones
-        in_field_addres_2 = CFSM.ADDRESS_LINE_2 in self.data_pos
-        if CFSM.ADDRESS_LINE_1 in self.data_pos and in_field_addres_2:
+        in_field_address_2 = ClientFieldShopify.ADDRESS_LINE_2 in self.data_pos
+        if ClientFieldShopify.ADDRESS_LINE_1 in self.data_pos and in_field_address_2:
             def join_address(row):
-                if row[CFSM.ADDRESS_LINE_2].strip() == '':
-                    return row[CFSM.ADDRESS_LINE_1]
-                return row[CFSM.ADDRESS_LINE_1] + ', ' + row[CFSM.ADDRESS_LINE_2]
+                if row[ClientFieldShopify.ADDRESS_LINE_2].strip() == '':
+                    return row[ClientFieldShopify.ADDRESS_LINE_1]
 
-            self.data_pos[CFSM.ADDRESS_LINE_1] = self.data_pos.apply(join_address, axis=1)
-            self.data_pos = self.data_pos.drop(CFSM.ADDRESS_LINE_2, axis=1)
+                address = row[ClientFieldShopify.ADDRESS_LINE_1]
+                address += ", " + row[ClientFieldShopify.ADDRESS_LINE_2]
+                return address
+
+            df_address = self.data_pos.apply(join_address, axis=1)
+            self.data_pos[ClientFieldShopify.ADDRESS_LINE_1] = df_address
+            self.data_pos = self.data_pos.drop(ClientFieldShopify.ADDRESS_LINE_2, axis=1)
 
         # Eliminar clientes repetidos donde la direccion no sea la predeterminada.
-        if CFSM.ADDRESS_IS_DEFAULT in self.data_pos:
-            values = self.data_pos[CFSM.ADDRESS_IS_DEFAULT].str.upper().isin(['TRUE', 'VERDADERO'])
-            del_index = self.data_pos[~values].index
+        if ClientFieldShopify.ADDRESS_IS_DEFAULT in self.data_pos:
+            df_address_default = self.data_pos[ClientFieldShopify.ADDRESS_IS_DEFAULT]
+            is_address_default = df_address_default.str.upper().isin(['TRUE', 'VERDADERO'])
+            del_index = self.data_pos[~is_address_default].index
             self.data_pos = self.data_pos.drop(del_index)
             self.data = self.data.drop(del_index)
 
         super().normalize()
 
-    @classmethod
-    def from_dataclasses(cls, dataclasses: list[CSJ], *, mapfields: MapFields[CFSM, CF]):
-        """Pasa la informacion de los clientes de un listado de dataclasses a uno ClientShopify.
-        API de Shopify Version: 2024-01
-        """
-        df_clients = cls(StringIO("|".join(CFSM)), mapfields=mapfields)
-        data = []
-
-        for dtcls in dataclasses:
-            dtcls_metafield_tipo_de_documento = ""
-
-            for metafield in dtcls.metafields:
-                is_custom = metafield.namespace == "custom"
-                is_tipo_documento = metafield.key == "tipo_de_documento"
-                is_single_line_text = metafield.type == "single_line_text_field"
-                if is_custom and is_tipo_documento and is_single_line_text:
-                    dtcls_metafield_tipo_de_documento = metafield.value
-                    break
-
-            dt_dict = {
-                CFSM.ID: str(dtcls.id or ""),
-                CFSM.EMAIL: dtcls.email,
-                CFSM.FIRST_NAME: dtcls.first_name,
-                CFSM.LAST_NAME: dtcls.last_name,
-                CFSM.PHONE: dtcls.default_address.phone,
-                CFSM.CREATED_AT: dtcls.created_at,
-                CFSM.ADDRESS_ID: str(dtcls.default_address.id or ""),
-                CFSM.ADDRESS_PHONE: dtcls.default_address.phone,
-                CFSM.ADDRESS_COMPANY: dtcls.default_address.company,
-                CFSM.ADDRESS_LINE_1: dtcls.default_address.address1,
-                CFSM.ADDRESS_LINE_2: dtcls.default_address.address2,
-                CFSM.ADDRESS_CITY: dtcls.default_address.city,
-                CFSM.ADDRESS_PROVINCE: dtcls.default_address.province,
-                CFSM.ADDRESS_COUNTRY: dtcls.default_address.country,
-                CFSM.ADDRESS_ZIP: dtcls.default_address.zip,
-                CFSM.ADDRESS_IS_DEFAULT: "VERDADERO" if dtcls.default_address.default else "",
-                CFSM.MF_TIPO_DE_DOCUMENTO: dtcls_metafield_tipo_de_documento,
-            }
-            data.append(dt_dict)
-
-        df_clients.data_pos = DataFrame(data).fillna("")
-        df_clients.data = df_clients.data_pos.copy()
-        df_clients.fields_apostrophe = set()
-        return df_clients
-
-    @classmethod
-    def from_json(cls,
-                  source: FilePath | LiteralString | ReadBuffer | dict, *,
-                  mapfields: MapFields[CFSM, CF]):
-        """Obtener los clientes de Shopify mediante el formato JSON,
-        API de Shopify Version: 2024-01"""
-        data = from_json(source)
-
-        if not isinstance(data, dict) or "customers" not in data or "metafields" not in data:
-            json_format = '{"customers": [{...}, ...], "metafields": [{...}, ...]}'
-            raise TypeError(f"El JSON debe tener este formato: '{json_format}'")
-
-        customers = data["customers"]
-        address = "default_address"
-        customers = [dict_to_dtcls(CSJ, {**c, address: CSJA(**c[address])}) for c in customers]
-        metafields: dict[int, list[CSJM]] = {}
-
-        for mfield in data["metafields"]:
-            mfield = dict_to_dtcls(CSJM, mfield)
-            if mfield.owner_id not in metafields:
-                metafields[mfield.owner_id] = []
-            metafields[mfield.owner_id].append(mfield)
-
-        for customer in customers:
-            customer.metafields = metafields[customer.id]
-
-        return cls.from_dataclasses(customers, mapfields=mapfields)
-
-MAPFIELDS_POS_SHOPIFY_MX = MapFields(
-    (CFSM.MF_TIPO_DE_DOCUMENTO, CF.TIPOIDENTIFICACION),
-    (CFSM.ADDRESS_COMPANY, CF.NUMERODOCUMENTO),
-    (CFSM.ADDRESS_ZIP, CF.CODIGOPOSTAL),
-    (CFSM.FIRST_NAME, CF.NOMBRERAZONSOCIAL),
-    (CFSM.SECOND_NAME, CF.NOMBRE2),
-    (CFSM.LAST_NAME, CF.APELLIDO1),
-    (CFSM.SECOND_LAST_NAME, CF.APELLIDO2),
-    (CFSM.ADDRESS_LINE_1, CF.FORMULADIRECCIONMM),
-    (CFSM.ADDRESS_LINE_1, CF.FORMULADIRECCION),
-    (CFSM.ADDRESS_PHONE, CF.TELEFONO1),
-    (CFSM.PHONE, CF.TELEFONOMOVIL),
-    (CFSM.EMAIL, CF.CORREOCONTACTO),
-    (CFSM.CREATED_AT, CF.FECHADECREACION),
-    (CFSM.ADDRESS_COUNTRY, CF.PAIS),
-    (CFSM.ADDRESS_PROVINCE, CF.DEPARTAMENTO)
+MAPFIELDS_CLIENTS_POS_SHOPIFY = MapFields(
+    (ClientFieldShopify.MF_TIPO_DE_DOCUMENTO, ClientField.TIPOIDENTIFICACION),
+    (ClientFieldShopify.ADDRESS_COMPANY, ClientField.NUMERODOCUMENTO),
+    (ClientFieldShopify.ADDRESS_ZIP, ClientField.CODIGOPOSTAL),
+    (ClientFieldShopify.FIRST_NAME, ClientField.NOMBRERAZONSOCIAL),
+    (ClientFieldShopify.SECOND_NAME, ClientField.NOMBRE2),
+    (ClientFieldShopify.LAST_NAME, ClientField.APELLIDO1),
+    (ClientFieldShopify.SECOND_LAST_NAME, ClientField.APELLIDO2),
+    (ClientFieldShopify.ADDRESS_LINE_1, ClientField.FORMULADIRECCIONMM),
+    (ClientFieldShopify.ADDRESS_LINE_1, ClientField.FORMULADIRECCION),
+    (ClientFieldShopify.ADDRESS_PHONE, ClientField.TELEFONO1),
+    (ClientFieldShopify.PHONE, ClientField.TELEFONOMOVIL),
+    (ClientFieldShopify.EMAIL, ClientField.CORREOCONTACTO),
+    (ClientFieldShopify.CREATED_AT, ClientField.FECHADECREACION),
+    (ClientFieldShopify.ADDRESS_COUNTRY, ClientField.PAIS),
+    (ClientFieldShopify.ADDRESS_PROVINCE, ClientField.DEPARTAMENTO)
 )
 
-MAPFIELDS_POS_SHOPIFY_MX[CFSM.MF_TIPO_DE_DOCUMENTO, CF.TIPOIDENTIFICACION].eq.update({
+_MF_TIPO_DE_DOCUMENTO = ClientFieldShopify.MF_TIPO_DE_DOCUMENTO, ClientField.TIPOIDENTIFICACION
+_MF_COUNTRY = ClientFieldShopify.ADDRESS_COUNTRY, ClientField.PAIS
+
+MAPFIELDS_CLIENTS_POS_SHOPIFY[_MF_TIPO_DE_DOCUMENTO].eq.update({
     "Cédula de ciudadanía": "CC",
     "Cédula de extranjería": "CE",
     "Pasaporte": "PA",
@@ -210,4 +145,4 @@ MAPFIELDS_POS_SHOPIFY_MX[CFSM.MF_TIPO_DE_DOCUMENTO, CF.TIPOIDENTIFICACION].eq.up
     "Tarjeta de identidad": "TI"
 })
 
-MAPFIELDS_POS_SHOPIFY_MX[CFSM.ADDRESS_COUNTRY, CF.PAIS].eq["Colombia"] = "169"
+MAPFIELDS_CLIENTS_POS_SHOPIFY[_MF_COUNTRY].eq["Colombia"] = "169"

@@ -7,4 +7,4 @@ from .fields import ClientField
 class ClientsCegid(ClientsPOS[ClientField]):
     """Clientes que se manejan segun el pos de CEGID RETAIL Y2."""
 
-MAPFIELDS_POS_CEGID = MapFields(*zip(ClientField, ClientField))
+MAPFIELDS_CLIENTS_POS_CEGID = MapFields(*zip(ClientField, ClientField))

@@ -1,13 +1,13 @@
 """Modulo para organizar la inforamcion de los clientes segun el Sistema POS."""
 
-from typing import Literal, TypeVar, Generic
-from pandas import DataFrame, ExcelFile, Series, Index, MultiIndex
+from typing import TypeVar, Generic
+from pandas import DataFrame, Series, Index, MultiIndex
 from core.mapfields import MapFields
-from utils.typing import FilePath, ReadBuffer, ReadCsvBuffer
-from .clients import Clients
+from data.io import DataIO, SupportDataIO, ModeDataIO
 from .fields import ClientField
+from .clients import Clients
 
-_K = TypeVar("_K", bound=str, covariant=True) # key primary
+_K = TypeVar("_K", bound=str) # key primary
 
 class ClientsPOS(Generic[_K], Clients):
     """Clientes que se manejan segun el sistema pos."""
@@ -15,21 +15,24 @@ class ClientsPOS(Generic[_K], Clients):
     __data_pos: DataFrame
 
     def __init__(self,
-                 filepath_or_buffer: FilePath | ReadBuffer | ExcelFile | ReadCsvBuffer,
-                 *,
-                 ftype: Literal["excel", "csv", "json"] = "csv",
-                 delimiter="|",
-                 encoding="utf-8",
-                 mapfields: MapFields[_K, ClientField]):
-        super().__init__(filepath_or_buffer, ftype=ftype, delimiter=delimiter, encoding=encoding)
-        self.__mapfields = mapfields
-        self.__data_pos = self.data.copy()
-        self.data = DataFrame(
-            columns=self.data.columns.copy(),
-            index=self.data.index.copy(),
-            dtype=str
+                 mapfields: MapFields[_K, ClientField],
+                 /,
+                 source: DataIO = None,
+                 destination: DataIO = None,
+                 support: SupportDataIO = "csv",
+                 mode: ModeDataIO = "object",
+                 **kwargs: ...):
+        """Gestionar la informacion de los clientes POS con una copia antes de transformar."""
+
+        super().__init__(
+            source=source,
+            destination=destination,
+            support=support,
+            mode=mode,
+            **kwargs
         )
-        self.data.fillna("", inplace=True)
+        self.__mapfields = mapfields
+        self.__data_pos = self.data.copy(True)
 
     @property
     def data_pos(self):
@@ -41,7 +44,7 @@ class ClientsPOS(Generic[_K], Clients):
         """Establecer un nuevo DataFrame de clientes en el POS."""
 
         if not isinstance(value, DataFrame):
-            raise TypeError("el valor no es un tipo DataFrame.")
+            raise TypeError("se espera un tipo DataFrame para reasignar los datos.")
         self.__data_pos = value
 
     @property
@@ -65,9 +68,9 @@ class ClientsPOS(Generic[_K], Clients):
         incorrect_list = [i for i in self.data_pos if i not in self.mapfields.fields_1]
         return set(incorrect_list)
 
-    def sort_fields(self, fields: set[_K] = None):
-        map_fields = fields if fields else set(str(mf) for mf in self.mapfields.fields_1)
-        map_fields = list(map_fields)
+    def sort_fields(self, fields: list[_K] = None):
+        map_fields = fields if fields else self.mapfields.fields_1
+        map_fields = list(dict.fromkeys(map_fields)) # Campos unicos y ordenados
         self.data_pos = self.data_pos[map_fields]
         super().sort_fields()
 
@@ -85,10 +88,6 @@ class ClientsPOS(Generic[_K], Clients):
 
         self.data_pos.update(data_fields)
         super().fix(data_mapfields)
-
-    def normalize(self):
-        self.data_pos = self.data_pos.fillna("")
-        super().normalize()
 
     def analyze(self) -> dict[tuple[_K, ClientField], Index | MultiIndex]:
         analysis = super().analyze()
@@ -127,3 +126,24 @@ class ClientsPOS(Generic[_K], Clients):
     def exceptions(self, analysis: dict[tuple[_K, ClientField], Index | MultiIndex]):
         analysis_mapfields = {mapfields[1]: v for mapfields, v in analysis.items()}
         return super().exceptions(analysis_mapfields)
+
+    def save(self,
+             support: SupportDataIO = None,
+             mode: ModeDataIO = "object",
+             /,
+             fixed=False,
+             **kwargs: ...):
+        """
+        Guarda la informacion de los clientes segun si es el original o el convertido.
+        DataPOS | Data
+        """
+        data = self.data
+        if not fixed:
+            self.data = self.data_pos
+
+        data_returned = super().save(support, mode, **kwargs)
+
+        if not fixed:
+            self.data = data
+
+        return data_returned
