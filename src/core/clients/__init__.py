@@ -10,7 +10,6 @@ __all__ = [
     "exceptions",
     "Clients",
     "ClientsPOS",
-    "DANE_MUNICIPIOS",
     "ClientsCegid",
     "MAPFIELDS_CLIENTS_POS_CEGID",
     "ClientsShopify",
@@ -20,6 +19,5 @@ __all__ = [
 from . import fields, exceptions
 from .clients import Clients
 from .pos import ClientsPOS
-from .municipios import DANE_MUNICIPIOS
 from .pos_cegid import ClientsCegid, MAPFIELDS_CLIENTS_POS_CEGID
 from .pos_shopify import ClientsShopify, MAPFIELDS_CLIENTS_POS_SHOPIFY

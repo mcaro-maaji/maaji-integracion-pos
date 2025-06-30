@@ -9,8 +9,8 @@ from pandas import (
     concat as pandas_concat
 )
 from data.io import BaseDataIO, DataIO, SupportDataIO, ModeDataIO
-from .fields import ClientField, DaneField
-from .municipios import DANE_MUNICIPIOS
+from core.dane import DANE_MUNICIPIOS, DaneMunicipiosField
+from .fields import ClientField
 from .exceptions import (
     ClientsException,
     ClientsWarning,
@@ -136,7 +136,7 @@ class Clients(BaseDataIO):
         tipos_identificacion = tipos_identificacion[~tipos_identificacion].index
 
         df_codigo_postal = self.data[ClientField.CODIGOPOSTAL].astype(str)
-        codigo_postal = df_codigo_postal.isin(DANE_MUNICIPIOS[DaneField.CODIGO_POSTAL])
+        codigo_postal = df_codigo_postal.isin(DANE_MUNICIPIOS[DaneMunicipiosField.CODIGO_POSTAL])
         codigo_postal = codigo_postal[~codigo_postal].index
 
         df_field = self.data[ClientField.SEXO]
@@ -292,8 +292,8 @@ class Clients(BaseDataIO):
         """Corrige los campos respecto a las direcciones de los clientes."""
         idx_direccion = analysis[ClientField.FORMULADIRECCIONMM]
         if len(idx_direccion) > 0:
-            map_municipios = DANE_MUNICIPIOS.set_index(DaneField.CODIGO_POSTAL)[DaneField.MUNICIPIO]
-            map_municipios = map_municipios.to_dict()
+            map_municipios = DANE_MUNICIPIOS.set_index(DaneMunicipiosField.CODIGO_POSTAL)
+            map_municipios = map_municipios[DaneMunicipiosField.MUNICIPIO].to_dict()
             municipios = self.data.loc[idx_direccion, ClientField.CODIGOPOSTAL].map(
                 lambda x: map_municipios.get(x, "CALLE")
             )
