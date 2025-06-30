@@ -31,7 +31,8 @@ REPR_MODE_DATAIO = "'" + "'|'".join(ListModeDataIO) + "'"
 
 def is_dataio(dataio) -> TypeGuard[DataIO]:
     """Comprobar de que el valor sea uno soportado para ser gestionado por la clase BaseDataIO."""
-    return isinstance(dataio, (str, bytes, PathLike, BufferedIOBase, ExcelFile, FileStorage))
+    dataio_types = (str, bytes, PathLike, BufferedIOBase, ExcelFile, FileStorage, DataFrame)
+    return isinstance(dataio, dataio_types)
 
 def transform_dataio(dataio: DataIO | None,
                      support: SupportDataIO,
