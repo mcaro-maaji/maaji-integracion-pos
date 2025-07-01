@@ -4,6 +4,6 @@ from enum import StrEnum
 
 class DaneMunicipiosField(StrEnum):
     """Campos de las columnas sobre los codigos postales de la DANE Colombia."""
-    DEPARTAMENTO = "DEPARTAMENTO"
-    CODIGO_POSTAL = "CODIGO_POSTAL"
-    MUNICIPIO = "MUNICIPIO"
+    DEPARTAMENTO = "Departamento"
+    CODIGO_POSTAL = "Codigo Postal"
+    MUNICIPIO = "Municipio"
