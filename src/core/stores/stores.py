@@ -3,5 +3,5 @@
 from pandas import read_excel
 from utils.constants import PATH_DATA
 
-PATH_STORES = PATH_DATA / "Almacenes_CEGID_Y2_Retail.xlsx"
+PATH_STORES = PATH_DATA / "Tiendas_CEGID_Y2_Retail.xlsx"
 STORES = read_excel(PATH_STORES, dtype=str).fillna("")
