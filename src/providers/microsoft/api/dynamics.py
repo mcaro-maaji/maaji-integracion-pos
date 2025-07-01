@@ -1,11 +1,11 @@
 """Modulo para gestionar la api del ERP Dynamics 365"""
 
 from typing import TypedDict, TypeGuard, Literal
-from time import timezone as local_timezone
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from requests import request
 from requests.exceptions import Timeout as RequestTimeoutError
 from utils.env import Environment
+from utils.constants import TZ_LOCAL
 from .login import LoginMicrosoft
 
 class DynamicsApiError(Exception):
@@ -152,17 +152,15 @@ class DynamicsApi:
 
         data_area_id = data_area_id if data_area_id else self.data_area_id
         offset = offset if offset else timedelta(hours=6)
-        tz_local_offset = timedelta(seconds=local_timezone * -1)
-        tz_local = timezone(tz_local_offset)
 
         if date_end is None and date_start is None:
             date_end = datetime.now()
 
         if apply_tzlocal and not date_start is None:
-            date_start = date_start.astimezone(tz_local)
+            date_start = date_start.astimezone(TZ_LOCAL)
 
         if apply_tzlocal and not date_end is None:
-            date_end = date_end.astimezone(tz_local)
+            date_end = date_end.astimezone(TZ_LOCAL)
 
         if date_end is None and not date_start is None:
             date_end = date_start + offset
