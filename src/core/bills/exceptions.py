@@ -40,7 +40,7 @@ class _MetaMsgBills(type):
         return is_id_msg and (is_excep | is_warn)
 
 class _BaseMsgBills(metaclass=_MetaMsgBills):
-    """Base para los mensajes de los errores en los campos de los facturas."""
+    """Base para los mensajes de los errores en los campos de las facturas."""
     msg_type: Literal["exception", "warning"]
     id_msg: IDMSG
     index: list[str | int]
@@ -63,11 +63,11 @@ class _BaseMsgBills(metaclass=_MetaMsgBills):
         super().__init__(self.message)
 
 class BillsException(_BaseMsgBills, Exception):
-    """Excepciones en los campos de los facturas."""
+    """Excepciones en los campos de las facturas."""
     msg_type = "exception"
 
 class BillsWarning(_BaseMsgBills, Warning):
-    """Advertencias en los campos de los facturas."""
+    """Advertencias en los campos de las facturas."""
     msg_type = "warning"
 
 

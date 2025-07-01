@@ -60,7 +60,7 @@ class Bills(BaseDataIO):
             - Ordena los datos por el numero de factura
         """
         id_integracion = self.data[BillField.ID_INTEGRACION]
-        id_integracion = id_integracion.str.replace(r"(\s|I|R)$", " ", regex=True)
+        id_integracion = id_integracion.str.replace(r"(\s|I|R)$", "", regex=True) + " "
         self.data[BillField.ID_INTEGRACION] = id_integracion
 
         def format_date(value: str):

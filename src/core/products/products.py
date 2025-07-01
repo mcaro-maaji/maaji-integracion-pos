@@ -57,7 +57,7 @@ class Products(BaseDataIO):
             - Ordena los datos por el SKU
         """
         id_integracion = self.data[ProductField.ID_INTEGRACION]
-        id_integracion = id_integracion.str.replace(r"(\s|I|R)$", " ", regex=True)
+        id_integracion = id_integracion.str.replace(r"(\s|I|R)$", "", regex=True) + " "
         self.data[ProductField.ID_INTEGRACION] = id_integracion
 
         ean = self.data[ProductField.EAN]
