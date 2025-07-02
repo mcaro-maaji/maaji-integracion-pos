@@ -130,7 +130,7 @@ class Bills(BaseDataIO):
         costo = costo[costo.isin(["", "0", "0.", "0.0", "0.00"])]
 
         moneda = self.data[BillField.MONEDA]
-        moneda = moneda[moneda == "COP"]
+        moneda = moneda[moneda != "COP"]
 
         factura = self.data[BillField.FACTURA]
         factura = factura[factura == df_numero_factura.replace("FEV", "", regex=False)]
