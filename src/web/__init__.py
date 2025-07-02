@@ -3,6 +3,6 @@
 __version__ = "1.0.0"
 
 from service import services
-from . import clients
+from . import clients, bills
 
-SERVICES_GROUP = services.group("web", clients.service)
+SERVICES_GROUP = services.group("web", clients.service, bills.service)
