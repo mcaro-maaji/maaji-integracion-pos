@@ -90,7 +90,7 @@ def exceptions():
 @services.operation(
     common.returns.response,
     *clients.cegid.save.parameters,
-    filename=common.params.string,
+    filename=common.params.filename,
     **clients.cegid.save.parameterskv
 )
 async def download(filename: str = None, **kwargs: ...):
