@@ -121,7 +121,7 @@ def requiredfields(dataid: UUID, /):
     return list(clients_pos.no_match_fields())
 
 @services.operation(
-    common.params.optional(mapfields.params.fields),
+    common.params.optional(common.params.fields),
     common.returns.exitstatus,
     dataid=clients.params.dataid
 )

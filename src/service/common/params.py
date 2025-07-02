@@ -6,6 +6,7 @@ from io import BytesIO
 from os import PathLike, fsdecode
 from pathlib import Path
 from codecs import lookup as lookup_codec
+from datetime import datetime as _datetime
 from pandas import Series
 from service.decorator import services
 from service.parameters import ServiceOptParameter, P, R
@@ -125,3 +126,36 @@ def series(value: list[object]):
     """Parametro que convierte el valor en uno tipo pandas.Series"""
     value = arraylist(value)
     return Series(value)
+
+@services.parameter(type="string[]")
+def fields(value: list[str]):
+    """Parametro que verifica que el valor es de tipo ArrayList con valores tipo string"""
+    value = arraylist(value)
+    contain_str = all(isinstance(i, str) for i in value)
+    if contain_str:
+        return value
+    raise TypeError("el valor arraylist debe contener valores tipo string.")
+
+@services.parameter(type="DateTime")
+def datetime(value: str) -> _datetime:
+    """Parametro que valida un string a una fecha manipulable, formato ISO8601."""
+    try:
+        return _datetime.fromisoformat(value)
+    except ValueError as err:
+        raise ValueError("el formato de la fecha debe ser ISO8601.") from err
+
+@services.parameter(type="'infer' | boolean | string[] | number | number[] | None")
+def header(value: str | int | bool | list[str | int] | None):
+    """
+    Parametro que verifica si el encabezado de una tabla, numero para la fila o None si no tiene.
+    """
+    if value == "infer" or isinstance(value, (int, bool, list, tuple)) or value is None:
+        return value
+    raise TypeError("debe ser de tipo 'infer' | boolean | string[] | number | number[] | None")
+
+@services.parameter(type="string | None")
+def filename(value: str | None):
+    """Parametro que recibe un string con el nombre de un archivo o nulo si no hay nombre."""
+    if isinstance(value, str) or value is None:
+        return value
+    raise TypeError("el valor debe ser de tipo 'string' o None")
