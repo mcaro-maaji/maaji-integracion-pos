@@ -23,6 +23,6 @@ from .types import (
 from .parameters import ServiceOptParameter, ServiceOptReturn
 from .operation import ServiceOperation
 from .decorator import services
-from . import mapfields, clients
+from . import mapfields, clients, bills
 
-SERVICES_GROUPS = services.groups("groups", mapfields.group, clients.group)
+SERVICES_GROUPS = services.groups("groups", mapfields.group, clients.group, bills.group)
