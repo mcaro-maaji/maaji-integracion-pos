@@ -1,6 +1,6 @@
 /**
- * @fileoverview Logica del template "templates/pages/clients".
- * @module templates/pages/clients/cegid
+ * @fileoverview Logica del template "templates/pages/bills".
+ * @module templates/pages/bills/cegid
  * @author Manuel Caro
  * @version 1.0.0
  */
@@ -15,42 +15,61 @@ import {
     ResponsiveLayoutModule
 } from "../../dependencies/tabulator-master-6.3-dist/tabulator_esm.mjs"
 
-let systemPOS = "cegid"
+/** @type {"local" | "dynamicsApi"} */
+let datafrom = "local"
 const listSupport = ["csv", "excel", "json", "clipboard"]
-const tableElementId = "table-clients"
+const tableElementId = "table-bills"
 const tableElement = document.getElementById(tableElementId)
-const btnUploadElement = document.getElementById("btnupload-clients")
-const inputFileElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-file-clients"))
-const inputFileNameElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-filename-clients"))
-const btnClearElement = document.getElementById("btnclear-clients")
-const selectSupportElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-support-clients"))
-const selectOrientJsonElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-orientjson-clients"))
-const inputSeparadorElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-separator-clients"))
-const btnFullFixElement = document.getElementById("btnfullfix-clients")
-const logSquareElement = document.getElementById("logsquare-clients")
-const btnDownloadElement = document.getElementById("btndownload-clients")
+const btnUploadElement = document.getElementById("btnupload-bills")
+const inputFileElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-file-bills"))
+const inputFileNameElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-filename-bills"))
+const btnClearElement = document.getElementById("btnclear-bills")
+const selectSupportElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-support-bills"))
+const selectOrientJsonElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-orientjson-bills"))
+const inputSeparadorElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-separator-bills"))
+const btnFullFixElement = document.getElementById("btnfullfix-bills")
+const logSquareElement = document.getElementById("logsquare-bills")
+const btnDownloadElement = document.getElementById("btndownload-bills")
+const inputHeaderElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-header-bills"))
+const btnDynamicsElement = /** @type {HTMLButtonElement | null} */ (document.getElementById("btndynamics-bills"))
+const btnSubmitModalDynamicsElement =/** @type {HTMLButtonElement | null} */ (document.getElementById("btn-submit-modaldynamics"))
+const selectDynamicsEnvElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-dynamics-env"))
+const selectDynamicsDataAreaElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-dynamics-data-area"))
+const inputDynamicsDateStartElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-dynamics-date-start"))
+const inputDynamicsDateEndElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-dynamics-date-end"))
 
 /** @param {"visible" | "hidden" | "loading"} state */
 export function setStateTable(state="visible") {
-    if (btnUploadElement && tableElement && btnFullFixElement && btnDownloadElement) {
+    if (
+        btnUploadElement &&
+        tableElement &&
+        btnFullFixElement &&
+        btnDownloadElement &&
+        btnDynamicsElement
+    ) {
         tableElement.hidden = state !== "visible"
         btnUploadElement.hidden = !(state !== "visible")
+        btnDynamicsElement.hidden = !(state !== "visible")
 
         if (state === "visible") {
             tableElement.classList.remove("d-none")
             btnUploadElement.classList.add("d-none")
+            btnDynamicsElement.classList.add("d-none")
             btnFullFixElement.classList.remove("disabled")
             btnDownloadElement.classList.remove("disabled")
         } else {
             tableElement.classList.add("d-none")
             btnUploadElement.classList.remove("d-none")
+            btnDynamicsElement.classList.remove("d-none")
             btnFullFixElement.classList.add("disabled")
             btnDownloadElement.classList.add("disabled")
 
             if (state === "loading") {
                 btnUploadElement.classList.add("btn-isloading")
+                btnDynamicsElement.classList.add("btn-isloading")
             } else {
                 btnUploadElement.classList.remove("btn-isloading")
+                btnDynamicsElement.classList.remove("btn-isloading")
             }
         }
     }
@@ -60,7 +79,7 @@ setStateTable("hidden")
 
 const tableOptions = {
     height: "26vmax",
-    layout: "fitData",
+    layout: "fitColumns",
     resizableColumns: true,
     pagination: "local",
     paginationSize: 25,
@@ -85,18 +104,21 @@ let stateBtnFix = "original"
 
 /**
  * @returns {{
- *   support: string
  *   fixed: boolean
  *   filename: string | null
- *   pos: string
+ *   support?: string
  *   sep?: string
  *   index?: boolean
  *   orient?: string
  *   excel?: boolean
+ *   header?: boolean | null
+ *   dynamicsenv?: string
+ *   areaid?: string
+ *   datestart?: string | null
+ *   dateend?: string | null
  * }}
  */
 export function getParameterskv() {
-    const pos = systemPOS || "cegid"
     const fixed = stateBtnFix === "fixed"
     const support = selectSupportElement?.value.toLowerCase() || "csv"
     const sep = inputSeparadorElement?.value === null ? "|" : inputSeparadorElement?.value
@@ -104,25 +126,35 @@ export function getParameterskv() {
     const orientjson = selectOrientJsonElement?.value || "records"
     const index = false
     const excel = true
+    const header = inputHeaderElement?.checked || null
+    const dynamicsenv = selectDynamicsEnvElement?.value || "PROD"
+    const areaid = selectDynamicsDataAreaElement?.value || "AM"
+    const datestart = inputDynamicsDateStartElement?.value || null
+    const dateend = inputDynamicsDateEndElement?.value || null
 
     if (!listSupport.includes(support)) {
         throw new ApiError("no se ha seleccionado un soporte valido: " + support)
     }
 
-    const parameterskv = { support, fixed, filename, pos }
+    const parameterskv = { fixed, filename }
 
-    if (support === "csv") {
-        return { ...parameterskv, sep, index }
-    } else if (support === "excel") {
-        return { ...parameterskv, index }
-    } else if (support === "json") {
-        return { ...parameterskv, orient: orientjson }
-    } else if (support === "clipboard") {
-        if (sep) return { ...parameterskv, excel, index, sep  }
-        return { ...parameterskv, excel, index  }
+    if (datafrom === "local") {
+        if (support === "csv") {
+            return { ...parameterskv, support, sep, index, header }
+        } else if (support === "excel") {
+            return { ...parameterskv, support, index, header }
+        } else if (support === "json") {
+            return { ...parameterskv, support, orient: orientjson }
+        } else if (support === "clipboard") {
+            if (sep) return { ...parameterskv, support, excel, index, sep, header  }
+            return { ...parameterskv, support, excel, index  }
+        }
+
+        return { ...parameterskv, support, sep, orient: orientjson, index, excel }
+    } else if (datafrom === "dynamicsApi") {
+        return { ...parameterskv, dynamicsenv, areaid, datestart, dateend }
     }
-
-    return { support, sep, fixed, filename, orient: orientjson, pos, index, excel }
+    throw new ApiError("error al cargar la informacion: 'datafrom' -> " + datafrom)
 }
 
 const loadLastScroll = (function () {
@@ -204,8 +236,8 @@ export function parserLogClient(text) {
     return text
 }
 
-export async function getLogClients() {
-    const apiRes = await api.web.clients.exceptions.run()
+export async function getLogBills() {
+    const apiRes = await api.web.bills.exceptions.run()
     const result = await apiRes.result
     /** @type {string[]} */
     const initValue = []
@@ -248,8 +280,14 @@ export async function createData() {
     setStateTable("loading")
     try {
         const parameterskv = getParameterskv()
-        await api.web.clients.create.run([], parameterskv)
-        const apiRes = await api.web.clients.get.run([], parameterskv)
+        if (datafrom === "local") {
+            await api.web.bills.create.run([], parameterskv)
+        } else if (datafrom === "dynamicsApi") {
+            await api.web.bills.fromapi.run([], parameterskv)
+        } else {
+            throw new ApiError("error al cargar la informacion: 'datafrom' -> " + datafrom)
+        }
+        const apiRes = await api.web.bills.get.run([], parameterskv)
         const result = await apiRes.result
         setStateTable("visible")
         setDataOnTable(result.data)
@@ -279,7 +317,7 @@ export async function listenerInputFile(event) {
     }
 
     const file = target.files[0]
-    api.web.clients.create.addFiles(file)
+    api.web.bills.create.addFiles(file)
 
     await createData()
 
@@ -310,21 +348,22 @@ if (btnFullFixElement) {
 
         try {
             if (stateBtnFix === "original") {
-                await api.web.clients.fullfix.run()
+                await api.web.bills.fullfix.run()
                 stateBtnFix = "fixed"
             } else {
                 stateBtnFix = "original"
             }
             const parameterskv = getParameterskv()
-            const apiRes = await api.web.clients.get.run([], parameterskv)
+            const apiRes = await api.web.bills.get.run([], parameterskv)
             const result = await apiRes.result
-    
             toggleBtnFix()
             setStateTable("visible")
             loadLastScroll()
             setDataOnTable(result.data)
             loadLastScroll()
-            setLogSquare(await getLogClients())
+            setLogSquare(await getLogBills())
+            // Un solo uso de Reparar porque no esta implementado tener una copia del original
+            btnFullFixElement.classList.add("disabled")
         } catch (err) {
             setStateTable("hidden")
             setLogSquare(["Error: no se ha logrado obtener la informacion desde la API"])
@@ -334,8 +373,10 @@ if (btnFullFixElement) {
 
 if (btnDownloadElement) {
     btnDownloadElement.addEventListener("click", async () => {
+        const oldDatafrom = datafrom
+        datafrom = "local"
         const parameterskv = getParameterskv()
-        const apiRes = await api.web.clients.download.run([], parameterskv)
+        const apiRes = await api.web.bills.download.run([], parameterskv)
         if (parameterskv.support === "clipboard") {
             const result = await apiRes.result
             if (typeof result.data === "string") {
@@ -351,6 +392,7 @@ if (btnDownloadElement) {
                 setLogSquare(["Error: no se descargo la informacion, " + String(err)], "start")
             }
         }
+        datafrom = oldDatafrom
     })
 }
 
@@ -358,19 +400,13 @@ if (btnClearElement) {
     btnClearElement.addEventListener("click", async () => {
         setStateTable("loading")
         table.clearData()
-        await api.web.clients.clear.run()
+        await api.web.bills.clear.run()
         setStateTable("hidden")
         if (logSquareElement) {
             logSquareElement.innerHTML = ""
         }
         stateBtnFix = "original"
         toggleBtnFix()
-        if (
-            selectSupportElement && selectSupportElement.value === "csv" &&
-            systemPOS === "shopify" && inputSeparadorElement
-        ) {
-            inputSeparadorElement.value = ","
-        }
     })
 }
 
@@ -389,64 +425,57 @@ if (selectSupportElement) {
                 btnUploadElement.lastElementChild.textContent = "Subir Archivo " + support.toUpperCase()
             }
         }
-        if (support === "csv" && systemPOS === "shopify" && inputSeparadorElement) {
-            inputSeparadorElement.value = ","
-        }
-
-        if (inputSeparadorElement && selectOrientJsonElement) {
+        if (inputHeaderElement && inputSeparadorElement && selectOrientJsonElement) {
             if (support === "json") {
-                inputSeparadorElement.classList.add("d-none")
+                inputHeaderElement.parentElement?.classList.add("d-none")
+                inputHeaderElement.hidden = true
+                inputSeparadorElement.parentElement?.classList.add("d-none")
                 inputSeparadorElement.hidden = true
-                if (inputSeparadorElement.labels) {
-                    inputSeparadorElement.labels.forEach(lb => {
-                        lb.classList.remove("d-none")
-                        lb.textContent = "Orientacion:"
-                    })
-                }
-                selectOrientJsonElement.classList.remove("d-none")
+                selectOrientJsonElement.parentElement?.classList.remove("d-none")
                 selectOrientJsonElement.hidden = false
             } else if (support === "excel") {
-                inputSeparadorElement.classList.add("d-none")
+                inputHeaderElement.parentElement?.classList.remove("d-none")
+                inputHeaderElement.hidden = false
+                inputSeparadorElement.parentElement?.classList.add("d-none")
                 inputSeparadorElement.hidden = true
-                if (inputSeparadorElement.labels) {
-                    inputSeparadorElement.labels.forEach(lb => {
-                        lb.classList.add("d-none")
-                    })
-                }
+                selectOrientJsonElement.parentElement?.classList.add("d-none")
+                selectOrientJsonElement.hidden = true
             } else {
-                inputSeparadorElement.classList.remove("d-none")
+                inputHeaderElement.parentElement?.classList.remove("d-none")
+                inputHeaderElement.hidden = false
+                inputSeparadorElement.parentElement?.classList.remove("d-none")
                 inputSeparadorElement.hidden = false
-                if (inputSeparadorElement.labels) {
-                    inputSeparadorElement.labels.forEach(lb => {
-                        lb.classList.remove("d-none")
-                        lb.textContent = "Separador:"
-                    })
-                }
-                selectOrientJsonElement.classList.add("d-none")
+                selectOrientJsonElement.parentElement?.classList.add("d-none")
                 selectOrientJsonElement.hidden = true
             }
         }
     })
 }
 
-if (btnUploadElement && inputFileElement) {
-    btnUploadElement.onclick = async () => {
-        const { support } = getParameterskv()
-
-        if (support === "clipboard") {
-            await createData()
-        } else {
-            inputFileElement.click()
-        }
-    }
-}
-
 /** @param {*} context */
 export function template(context) {
-    systemPOS = "pos" in context ? context.pos : "cegid"
-
     if (inputFileElement) {
         inputFileElement.addEventListener("change", listenerInputFile)
+    }
+
+    if (btnUploadElement && btnDynamicsElement && inputFileElement) {
+        btnUploadElement.onclick = async () => {
+            datafrom = "local"
+            const { support } = getParameterskv()
+
+            if (support === "clipboard") {
+                await createData()
+            } else {
+                inputFileElement.click()
+            }
+        }
+    }
+
+    if (btnSubmitModalDynamicsElement) {
+        btnSubmitModalDynamicsElement.onclick = async () => {
+            datafrom = "dynamicsApi"
+            await createData()
+        }
     }
 
     if (btnClearElement) {

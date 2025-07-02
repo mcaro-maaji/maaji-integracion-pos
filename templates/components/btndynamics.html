@@ -1,11 +1,11 @@
-{% macro btnupload(id_element, height="25vmax") %}
-<div id="{{ id_element }}" class="container-fluid d-flex flex-column justify-content-center align-items-center btn-table">
-    <img src="/static/icons/upload-button_icon.png" alt="upload-button" height="25%" />
+{% macro btndynamics(id_element, height="25vmax") %}
+<div type="button" id="{{ id_element }}" class="container-fluid d-flex flex-column justify-content-center align-items-center btn-table" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    <img src="/static/icons/dynamics_icon.png" alt="dynamics 365 icon" height="25%" />
     <div class="spinner-border fs-3 d-none" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
     <div class="my-1"></div>
-    <span class="fs-5">Subir Archivo CSV</span>
+    <span class="fs-5">Cargar desde Dynamics 365 API</span>
 </div>
 <style>
     .btn-table {

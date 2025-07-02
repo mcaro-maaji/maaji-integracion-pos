@@ -7,7 +7,10 @@
             <hr class="mt-2" />
         </div>
 
-        {% include "components/sidebar/clients.html" %}
+        <div class="accordion overflow-auto d-flex flex-column gap-1" id="accordionPanelsStayOpenExample">
+            {% include "components/sidebar/clients.html" %}
+            {% include "components/sidebar/bills.html" %}
+        </div>
 
         <div class="container p-0 mt-auto">
             <hr class="mb-3" />

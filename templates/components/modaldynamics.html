@@ -1,0 +1,47 @@
+{% macro modaldynamics(id_element, height="25vmax") %}
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Parametros Dynamics 365 API</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-body">
+                    <div class="d-flex align-items-baseline mb-2">
+                        <label for="select-dynamics-env" class="form-label me-2 label-fixed text-truncate">Entorno:</label>
+                        <select id="select-dynamics-env" class="form-control form-control-sm" aria-label="Seleccionar el Entorno Dynamics API.">
+                            <option selected value="PROD">Produccion</option>
+                            <option value="UAT">Pruebas UAT</option>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-baseline mb-2">
+                        <label for="select-dynamics-data-area" class="form-label me-2 label-fixed text-truncate">Área Datos:</label>
+                        <select id="select-dynamics-data-area" class="form-control form-control-sm" aria-label="Seleccionar el Area de Datos Dynamics API.">
+                            <option selected value="AM">ART MODE S.A.S BIC</option>
+                            <option value="MAS">MAS S.A.S BIC</option>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-baseline mb-2">
+                        <label for="in-dynamics-date-start" class="form-label me-2 label-fixed text-truncate">Fecha Inicio:</label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="in-dynamics-date-start" step="1">
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <label for="in-dynamics-date-end" class="form-label me-2 label-fixed text-truncate">Fecha Fin:</label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="in-dynamics-date-end" step="1">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="btn-submit-modaldynamics">Consultar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .label-fixed {
+        width: 130px;
+        white-space: nowrap;
+    }
+</style>
+{% endmacro %}

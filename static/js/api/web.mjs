@@ -39,6 +39,24 @@ export const web = {
         exceptions: new ApiWeb("clients/exceptions"),
         /** @type {ApiWeb<string | null>} */
         download: new ApiWeb("clients/download"),
+    },
+    bills: {
+        /** @type {ApiWeb<string>} */
+        create: new ApiWeb("bills/create"),
+        /** @type {ApiWeb<string>} */
+        fromapi: new ApiWeb("bills/fromapi"),
+        /** @type {ApiWeb<string>} */
+        get: new ApiWeb("bills/get"),
+        /** @type {ApiWeb<[[string, string], number[]][]>} */
+        clear: new ApiWeb("bills/clear"),
+        /** @type {ApiWeb<number>} */
+        fullfix: new ApiWeb("bills/fullfix"),
+        /** @type {ApiWeb<[[string, string], number[]][]>} */
+        analyze: new ApiWeb("bills/analyze"),
+        /** @type {ApiWeb<(string | null)[]>} */
+        exceptions: new ApiWeb("bills/exceptions"),
+        /** @type {ApiWeb<string | null>} */
+        download: new ApiWeb("bills/download"),
     }
 }
 
