@@ -85,7 +85,7 @@ class DynamicsApi:
         self.__path = path
         self.__login = login
         self.__response = None
-        self.timeout = timeout or (5, 600)
+        self.timeout = timeout or (5, 1800) # 30 minutos de tiempo de espera
         self.data_area_id = data_area_id
 
     @property
