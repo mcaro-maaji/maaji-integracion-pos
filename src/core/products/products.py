@@ -25,7 +25,7 @@ class Products(BaseDataIO):
         """Crea un dataframe manipulable para la informacion de los productos."""
         super().__init__(source, destination, support, mode)
 
-        header = kwargs.pop("header")
+        header = kwargs.pop("header", "no defined")
         if support != "json" and header is None and "names" not in kwargs:
             kwargs["names"] = list(ProductField)
 
@@ -105,7 +105,7 @@ class Products(BaseDataIO):
         ean = ean[ean == ""]
 
         proveedor = self.data[ProductField.PROVEEDOR]
-        proveedor = proveedor[~proveedor.isin(PROVIDERS[ProviderField.CODIGO])]
+        proveedor = proveedor[~proveedor.isin(PROVIDERS.data[ProviderField.CODIGO])]
         def is_date(value: str):
             try:
                 datetime.strptime(value, "%Y-%m-%d")

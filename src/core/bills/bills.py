@@ -26,7 +26,7 @@ class Bills(BaseDataIO):
         """Crea un dataframe manipulable para la informacion de las facturas."""
         super().__init__(source, destination, support, mode)
 
-        header = kwargs.pop("header")
+        header = kwargs.pop("header", "no defined")
         if support != "json" and header is None and "names" not in kwargs:
             kwargs["names"] = list(BillField)
 
@@ -117,13 +117,13 @@ class Bills(BaseDataIO):
         fecha_factura = fecha_factura[~fecha_factura.apply(is_date)]
 
         tienda = self.data[BillField.TIENDA]
-        tienda = tienda[~tienda.isin(STORES[StoreField.CODIGO_TIENDA])]
+        tienda = tienda[~tienda.isin(STORES.data[StoreField.CODIGO_TIENDA])]
 
         almacen = self.data[BillField.ALMACEN_TIENDA]
-        almacen = almacen[~almacen.isin(STORES[StoreField.CODIGO_ALMACEN])]
+        almacen = almacen[~almacen.isin(STORES.data[StoreField.CODIGO_ALMACEN])]
 
         proveedor = self.data[BillField.PROVEEDOR]
-        proveedor = proveedor[~proveedor.isin(PROVIDERS[ProviderField.CODIGO])]
+        proveedor = proveedor[~proveedor.isin(PROVIDERS.data[ProviderField.CODIGO])]
 
         ean = self.data[BillField.EAN]
         ean = ean[ean == ""]

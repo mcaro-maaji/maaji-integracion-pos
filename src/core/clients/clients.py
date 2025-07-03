@@ -136,7 +136,7 @@ class Clients(BaseDataIO):
         tipos_identificacion = tipos_identificacion[~tipos_identificacion].index
 
         df_codigo_postal = self.data[ClientField.CODIGOPOSTAL].astype(str)
-        codigo_postal = df_codigo_postal.isin(DANE_MUNICIPIOS[DaneMunicipiosField.CODIGO_POSTAL])
+        codigo_postal = df_codigo_postal.isin(DANE_MUNICIPIOS.data[DaneMunicipiosField.CODIGO_POSTAL])
         codigo_postal = codigo_postal[~codigo_postal].index
 
         df_field = self.data[ClientField.SEXO]
@@ -292,7 +292,7 @@ class Clients(BaseDataIO):
         """Corrige los campos respecto a las direcciones de los clientes."""
         idx_direccion = analysis[ClientField.FORMULADIRECCIONMM]
         if len(idx_direccion) > 0:
-            map_municipios = DANE_MUNICIPIOS.set_index(DaneMunicipiosField.CODIGO_POSTAL)
+            map_municipios = DANE_MUNICIPIOS.data.set_index(DaneMunicipiosField.CODIGO_POSTAL)
             map_municipios = map_municipios[DaneMunicipiosField.MUNICIPIO].to_dict()
             municipios = self.data.loc[idx_direccion, ClientField.CODIGOPOSTAL].map(
                 lambda x: map_municipios.get(x, "CALLE")

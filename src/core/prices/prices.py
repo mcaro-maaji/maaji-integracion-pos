@@ -25,7 +25,7 @@ class Prices(BaseDataIO):
         """Crea un dataframe manipulable para la informacion de los precios."""
         super().__init__(source, destination, support, mode)
 
-        header = kwargs.pop("header")
+        header = kwargs.pop("header", "no defined")
         if support != "json" and header is None and "names" not in kwargs:
             kwargs["names"] = list(PriceField)
 

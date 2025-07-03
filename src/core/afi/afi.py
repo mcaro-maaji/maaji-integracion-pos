@@ -63,8 +63,8 @@ class AFI(BaseDataIO):
         codigo_documento = self.data[AFIField.CODIGO_DOCUMENTO]
         old_columns = self.data.columns.copy()
 
-        df_lookup = AFI_PARAMETERS_UNIQUE[
-            [f for f in AFIParameterField if f in AFI_PARAMETERS_UNIQUE]
+        df_lookup = AFI_PARAMETERS_UNIQUE.data[
+            [f for f in AFIParameterField if f in AFI_PARAMETERS_UNIQUE.data]
         ].copy()
 
         df_lookup["PARAMETERS"] = (
@@ -149,9 +149,9 @@ class AFI(BaseDataIO):
         id_valid_parameters += "|" + self.data[AFIField.CUENTA_CONTABLE]
         id_valid_parameters += "|" + self.data[AFIField.CODIGO_CENTRO_COSTOS]
 
-        id_parameters = AFI_PARAMETERS_UNIQUE[AFIParameterField.COMPROBANTE].copy()
-        id_parameters += "|" + AFI_PARAMETERS_UNIQUE[AFIParameterField.CUENTA]
-        id_parameters += "|" + AFI_PARAMETERS_UNIQUE[AFIParameterField.CECO]
+        id_parameters = AFI_PARAMETERS_UNIQUE.data[AFIParameterField.COMPROBANTE].copy()
+        id_parameters += "|" + AFI_PARAMETERS_UNIQUE.data[AFIParameterField.CUENTA]
+        id_parameters += "|" + AFI_PARAMETERS_UNIQUE.data[AFIParameterField.CECO]
 
         no_valid_parameters = id_valid_parameters[~id_valid_parameters.isin(id_parameters)]
 

@@ -9,6 +9,7 @@ PATH_ROOT = PATH_ROOT.parent.parent.parent
 PATH_DATA = PATH_ROOT / "data"
 PATH_DOCS = PATH_ROOT / "docs"
 PATH_STATIC = PATH_ROOT / "static"
+PATH_STATIC_DATA = PATH_ROOT / "static/data"
 PATH_TEMPLATES = PATH_ROOT / "templates"
 SALT_KEY = b"VXOSphnDMkK_sU6Bg0dK7lwdF3yoCr-wVz9CbYFVIjw="
 TZ_LOCAL_OFFSET = timedelta(seconds=_local_timezone * -1)
