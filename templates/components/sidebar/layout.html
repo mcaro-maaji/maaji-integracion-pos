@@ -9,15 +9,23 @@
 
         <div class="accordion overflow-auto d-flex flex-column gap-1" id="accordionPanelsStayOpenExample">
             {% include "components/sidebar/clients.html" %}
+            {% include "components/sidebar/afi.html" %}
             {% include "components/sidebar/bills.html" %}
+            {% include "components/sidebar/products.html" %}
+            {% include "components/sidebar/prices.html" %}
         </div>
 
         <div class="container p-0 mt-auto">
             <hr class="mb-3" />
-            <a class="nav-link d-flex hover-color align-items-center" href="/configuration">
-                <img src="/static/icons/kit_tool_icon.ico" alt="client icon" height="25px" class="me-2" />
-                <h6 class="mb-0">Configuración</h6>
-            </a>
+            <div class="d-flex justify-content-between">
+                <a class="nav-link d-flex hover-color align-items-center" href="/configuration">
+                    <img src="/static/icons/kit_tool_icon.ico" alt="configuration icon" height="25px" class="me-2" />
+                    <h6 class="mb-0">Configuración</h6>
+                </a>
+                <a id="btn-systemshutdown" href="/api/shutdown">
+                    <img src="/static/icons/systemshutdown_icon.png" alt="shutdown icon" height="25px" class="me-2" />
+                </a>
+            </div>
         </div>
     </div>
 </div>

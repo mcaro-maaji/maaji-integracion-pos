@@ -1,0 +1,68 @@
+{% from "components/btnupload.html" import btnupload %}
+{% from "components/table.html" import table %}
+{% from "components/logsquare.html" import logsquare %}
+{% from "components/btndynamics.html" import btndynamics %}
+{% from "components/modaldynamics.html" import modaldynamics %}
+
+{% extends "layouts/main.html" %}
+
+{% set page_title = "Precios Cegid Y2" %}
+{% set navbar_title = "Gestion de Precios Venta > Precios Cegid Y2" %}
+
+{% block main_content %}
+<main class="container-fluid mt-3 px-5">
+    <div class="d-flex justify-content-between">
+        <div class="d-flex w-75 gap-3">
+            <div class="d-flex w-75">
+                <input type="text" class="form-control form-control-sm" id="in-filename-prices"
+                placeholder="Nombre de Archivo..." value="">
+            </div>
+            <div class="d-flex gap-3 w-100">
+                <select id="select-support-prices" class="form-control form-control-sm w-auto" aria-label="Seleccionar formato.">
+                    <option selected value="csv">CSV</option>
+                    <option value="excel">EXCEL</option>
+                    <option value="json">JSON</option>
+                    <option value="clipboard">PORTAPAPELES</option>
+                </select>
+                <div class="d-flex align-items-center gap-2 w-auto form-check px-0">
+                    <label for="in-header-prices" class="form-check-label mb-0 pe-4">Encabezados</label>
+                    <input type="checkbox" class="form-check-input" id="in-header-prices">
+                </div>
+                <div class="d-flex align-items-center gap-2 w-25">
+                    <label for="in-separator-prices" class="form-label mb-0">Separador:</label>
+                    <input type="text" class="form-control form-control-sm" id="in-separator-prices" placeholder="..." value="|">
+                </div>
+                <div class="d-flex align-items-center gap-2 w-25 d-none">
+                    <label for="select-orientjson-prices" class="form-label mb-0">Orientacion:</label>
+                    <select id="select-orientjson-prices" class="form-control form-control-sm w-auto" aria-label="Seleccionar Orientacion JSON." hidden>
+                        <option selected value="records">Registros</option>
+                        <option value="split">Separado</option>
+                        <option value="columns">Columnas</option>
+                        <option value="values">Valores</option>
+                        <option value="table">Tabla</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-1">
+            <button id="btnfullfix-prices" class="btn btn-success">Reparar</button>
+            <button id="btndownload-prices" class="btn btn-primary">Descargar</button>
+            <button id="btnclear-prices" class="btn btn-danger">Borrar</button>
+        </div>
+    </div>
+    <div class="my-3"></div>
+    <div class="d-flex gap-3">
+        {{ btnupload("btnupload-prices", height="26vmax") }}
+        {{ btndynamics("btndynamics-prices", height="26vmax") }}
+    </div>
+    {{ table("table-prices") }}
+    <div class="my-3"></div>
+    {{ logsquare("logsquare-prices", height="12vmax") }}
+    <input id="in-file-prices" type="file" class="d-none" />
+    {{ modaldynamics("modaldynamics-prices", height="12vmax") }}
+</main>
+<script type="module">
+    const script = new TemplateScript("pages/prices.mjs")
+    await script.exec()
+</script>
+{% endblock %}

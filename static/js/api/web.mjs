@@ -40,6 +40,24 @@ export const web = {
         /** @type {ApiWeb<string | null>} */
         download: new ApiWeb("clients/download"),
     },
+    afi: {
+        /** @type {ApiWeb<string>} */
+        create: new ApiWeb("afi/create"),
+        /** @type {ApiWeb<string>} */
+        settransfers: new ApiWeb("afi/settransfers"),
+        /** @type {ApiWeb<string>} */
+        get: new ApiWeb("afi/get"),
+        /** @type {ApiWeb<[[string, string], number[]][]>} */
+        clear: new ApiWeb("afi/clear"),
+        /** @type {ApiWeb<number>} */
+        fullfix: new ApiWeb("afi/fullfix"),
+        /** @type {ApiWeb<[[string, string], number[]][]>} */
+        analyze: new ApiWeb("afi/analyze"),
+        /** @type {ApiWeb<(string | null)[]>} */
+        exceptions: new ApiWeb("afi/exceptions"),
+        /** @type {ApiWeb<string | null>} */
+        download: new ApiWeb("afi/download"),
+    },
     bills: {
         /** @type {ApiWeb<string>} */
         create: new ApiWeb("bills/create"),
@@ -57,7 +75,43 @@ export const web = {
         exceptions: new ApiWeb("bills/exceptions"),
         /** @type {ApiWeb<string | null>} */
         download: new ApiWeb("bills/download"),
-    }
+    },
+    products: {
+        /** @type {ApiWeb<string>} */
+        create: new ApiWeb("products/create"),
+        /** @type {ApiWeb<string>} */
+        fromapi: new ApiWeb("products/fromapi"),
+        /** @type {ApiWeb<string>} */
+        get: new ApiWeb("products/get"),
+        /** @type {ApiWeb<[[string, string], number[]][]>} */
+        clear: new ApiWeb("products/clear"),
+        /** @type {ApiWeb<number>} */
+        fullfix: new ApiWeb("products/fullfix"),
+        /** @type {ApiWeb<[[string, string], number[]][]>} */
+        analyze: new ApiWeb("products/analyze"),
+        /** @type {ApiWeb<(string | null)[]>} */
+        exceptions: new ApiWeb("products/exceptions"),
+        /** @type {ApiWeb<string | null>} */
+        download: new ApiWeb("products/download"),
+    },
+    prices: {
+        /** @type {ApiWeb<string>} */
+        create: new ApiWeb("prices/create"),
+        /** @type {ApiWeb<string>} */
+        fromapi: new ApiWeb("prices/fromapi"),
+        /** @type {ApiWeb<string>} */
+        get: new ApiWeb("prices/get"),
+        /** @type {ApiWeb<[[string, string], number[]][]>} */
+        clear: new ApiWeb("prices/clear"),
+        /** @type {ApiWeb<number>} */
+        fullfix: new ApiWeb("prices/fullfix"),
+        /** @type {ApiWeb<[[string, string], number[]][]>} */
+        analyze: new ApiWeb("prices/analyze"),
+        /** @type {ApiWeb<(string | null)[]>} */
+        exceptions: new ApiWeb("prices/exceptions"),
+        /** @type {ApiWeb<string | null>} */
+        download: new ApiWeb("prices/download"),
+    },
 }
 
 export default web

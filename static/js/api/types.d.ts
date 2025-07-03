@@ -30,7 +30,7 @@ declare global {
             return?: DescriptionParamsOpt
         }
         
-        export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
+        export type JsonValue = string | number | boolean | null | undefined | JsonValue[] | { [key: string]: JsonValue }
         
         /** Parametros esperados por la API. */
         export interface Parameters {

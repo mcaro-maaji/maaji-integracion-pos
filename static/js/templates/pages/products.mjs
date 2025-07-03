@@ -1,6 +1,6 @@
 /**
- * @fileoverview Logica del template "templates/pages/bills".
- * @module templates/pages/bills/cegid
+ * @fileoverview Logica del template "templates/pages/products".
+ * @module templates/pages/products/cegid
  * @author Manuel Caro
  * @version 1.0.0
  */
@@ -18,20 +18,20 @@ import {
 /** @type {"local" | "dynamicsApi"} */
 let datafrom = "local"
 const listSupport = ["csv", "excel", "json", "clipboard"]
-const tableElementId = "table-bills"
+const tableElementId = "table-products"
 const tableElement = document.getElementById(tableElementId)
-const btnUploadElement = document.getElementById("btnupload-bills")
-const inputFileElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-file-bills"))
-const inputFileNameElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-filename-bills"))
-const btnClearElement = document.getElementById("btnclear-bills")
-const selectSupportElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-support-bills"))
-const selectOrientJsonElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-orientjson-bills"))
-const inputSeparadorElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-separator-bills"))
-const btnFullFixElement = document.getElementById("btnfullfix-bills")
-const logSquareElement = document.getElementById("logsquare-bills")
-const btnDownloadElement = document.getElementById("btndownload-bills")
-const inputHeaderElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-header-bills"))
-const btnDynamicsElement = /** @type {HTMLButtonElement | null} */ (document.getElementById("btndynamics-bills"))
+const btnUploadElement = document.getElementById("btnupload-products")
+const inputFileElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-file-products"))
+const inputFileNameElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-filename-products"))
+const btnClearElement = document.getElementById("btnclear-products")
+const selectSupportElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-support-products"))
+const selectOrientJsonElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-orientjson-products"))
+const inputSeparadorElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-separator-products"))
+const btnFullFixElement = document.getElementById("btnfullfix-products")
+const logSquareElement = document.getElementById("logsquare-products")
+const btnDownloadElement = document.getElementById("btndownload-products")
+const inputHeaderElement = /** @type {HTMLInputElement | null} */ (document.getElementById("in-header-products"))
+const btnDynamicsElement = /** @type {HTMLButtonElement | null} */ (document.getElementById("btndynamics-products"))
 const btnSubmitModalDynamicsElement =/** @type {HTMLButtonElement | null} */ (document.getElementById("btn-submit-modaldynamics"))
 const selectDynamicsEnvElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-dynamics-env"))
 const selectDynamicsDataAreaElement = /** @type {HTMLSelectElement | null} */ (document.getElementById("select-dynamics-data-area"))
@@ -79,7 +79,7 @@ setStateTable("hidden")
 
 const tableOptions = {
     height: "26vmax",
-    layout: "fitColumns",
+    layout: "fitData",
     resizableColumns: true,
     pagination: "local",
     paginationSize: 25,
@@ -236,8 +236,8 @@ export function parserLogClient(text) {
     return text
 }
 
-export async function getLogBills() {
-    const apiRes = await api.web.bills.exceptions.run()
+export async function getLogProducts() {
+    const apiRes = await api.web.products.exceptions.run()
     const result = await apiRes.result
     /** @type {string[]} */
     const initValue = []
@@ -284,13 +284,13 @@ export async function createData() {
             parameterskv.header = 0
         }
         if (datafrom === "local") {
-            await api.web.bills.create.run([], parameterskv)
+            await api.web.products.create.run([], parameterskv)
         } else if (datafrom === "dynamicsApi") {
-            await api.web.bills.fromapi.run([], parameterskv)
+            await api.web.products.fromapi.run([], parameterskv)
         } else {
             throw new ApiError("error al cargar la informacion: 'datafrom' -> " + datafrom)
         }
-        const apiRes = await api.web.bills.get.run([], parameterskv)
+        const apiRes = await api.web.products.get.run([], parameterskv)
         const result = await apiRes.result
         setStateTable("visible")
         setDataOnTable(result.data)
@@ -320,7 +320,7 @@ export async function listenerInputFile(event) {
     }
 
     const file = target.files[0]
-    api.web.bills.create.addFiles(file)
+    api.web.products.create.addFiles(file)
 
     await createData()
 
@@ -351,20 +351,20 @@ if (btnFullFixElement) {
 
         try {
             if (stateBtnFix === "original") {
-                await api.web.bills.fullfix.run()
+                await api.web.products.fullfix.run()
                 stateBtnFix = "fixed"
             } else {
                 stateBtnFix = "original"
             }
             const parameterskv = getParameterskv()
-            const apiRes = await api.web.bills.get.run([], parameterskv)
+            const apiRes = await api.web.products.get.run([], parameterskv)
             const result = await apiRes.result
             toggleBtnFix()
             setStateTable("visible")
             loadLastScroll()
             setDataOnTable(result.data)
             loadLastScroll()
-            setLogSquare(await getLogBills())
+            setLogSquare(await getLogProducts())
             // Un solo uso de Reparar porque no esta implementado tener una copia del original
             btnFullFixElement.classList.add("disabled")
         } catch (err) {
@@ -379,7 +379,7 @@ if (btnDownloadElement) {
         const oldDatafrom = datafrom
         datafrom = "local"
         const parameterskv = getParameterskv()
-        const apiRes = await api.web.bills.download.run([], parameterskv)
+        const apiRes = await api.web.products.download.run([], parameterskv)
         if (parameterskv.support === "clipboard") {
             const result = await apiRes.result
             if (typeof result.data === "string") {
@@ -403,7 +403,7 @@ if (btnClearElement) {
     btnClearElement.addEventListener("click", async () => {
         setStateTable("loading")
         table.clearData()
-        await api.web.bills.clear.run()
+        await api.web.products.clear.run()
         setStateTable("hidden")
         if (logSquareElement) {
             logSquareElement.innerHTML = ""

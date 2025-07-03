@@ -1,0 +1,50 @@
+{% macro btnafitransfers(id_element, height="25vmax") %}
+<div id="{{ id_element }}" class="container-fluid d-flex flex-column justify-content-center align-items-center btn-table" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    <img src="/static/icons/afi_transfer_icon.png" alt="afi transfers icon" height="25%" />
+    <div class="spinner-border fs-3 d-none" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <div class="my-1"></div>
+    <p class="fs-5 my-1">Cargar Transferencias a Zona Franca</p>
+    <span class="fs-5">Subir Archivo CSV</span>
+</div>
+<style>
+    .btn-table {
+        height: {{ height }};
+        background-color: #e5e5e5;
+        border: 5px solid #d3d3d3;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .btn-table:hover {
+        background-color: #d3d3d3;
+        border-color: #c3c3c3;
+    }
+    .btn-table .spinner-border {
+        width: 4rem;
+        height: 4rem;
+    }
+    .btn-isloading:hover {
+        background-color: #e5e5e5;
+        border-color: #d3d3d3;
+    }
+    .btn-isloading img {
+        display: none;
+    }
+    .btn-isloading .spinner-border {
+        display: inline-block !important;
+    }
+    .btn-isloading span {
+        visibility: hidden;
+        position: relative;
+    }
+    .btn-isloading span::after {
+        content: "Cargando...";
+        visibility: visible;
+        position: absolute;
+        left: 0;
+        right: 0;
+        text-align: center;
+    }
+</style>
+{% endmacro %}
