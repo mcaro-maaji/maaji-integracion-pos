@@ -112,6 +112,12 @@ export const web = {
         /** @type {ApiWeb<string | null>} */
         download: new ApiWeb("prices/download"),
     },
+    settings: {
+        /** @type {ApiWeb<string>} */
+        get: new ApiWeb("settings/get"),
+        /** @type {ApiWeb<string | null>} */
+        download: new ApiWeb("settings/download"),
+    }
 }
 
 export default web
