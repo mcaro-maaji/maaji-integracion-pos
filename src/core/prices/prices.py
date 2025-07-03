@@ -24,6 +24,11 @@ class Prices(BaseDataIO):
                  **kwargs: ...):
         """Crea un dataframe manipulable para la informacion de los precios."""
         super().__init__(source, destination, support, mode)
+
+        header = kwargs.pop("header")
+        if support != "json" and header is None and "names" not in kwargs:
+            kwargs["names"] = list(PriceField)
+
         self.load(dtype=str, **kwargs)
         self.data.fillna("", inplace=True)
 
@@ -88,7 +93,7 @@ class Prices(BaseDataIO):
         id_integracion = id_integracion[~id_integracion.str.startswith("ZPRM1")]
 
         moneda = self.data[PriceField.MONEDA]
-        moneda = moneda[moneda == "COP"]
+        moneda = moneda[moneda != "COP"]
 
         codigo = self.data[PriceField.CODIGO]
         codigo = codigo[codigo == ""]
@@ -122,7 +127,7 @@ class Prices(BaseDataIO):
             PriceField.FECHA_MODIFICACION: fecha_modificacion_index,
         }
 
-    def filter_fecha_modificacion(self, date_end: datetime, date_start: datetime = None):
+    def filter_fecha_modificacion(self, date_start: datetime, date_end: datetime = None):
         """Filtra los datos por un rango de fecha especifico."""
 
         fecha_modificacion = to_datetime(self.data[PriceField.FECHA_MODIFICACION], utc=False)
@@ -130,10 +135,10 @@ class Prices(BaseDataIO):
 
         self.data = self.data.sort_values(by=PriceField.FECHA_MODIFICACION)
         fecha_modificacion = self.data[PriceField.FECHA_MODIFICACION]
-        first_fecha_modificacion = fecha_modificacion.iloc[0]
+        last_fecha_modificacion = fecha_modificacion.iloc[-1]
 
-        if date_start is None:
-            date_start = first_fecha_modificacion
+        if date_end is None:
+            date_end = last_fecha_modificacion
 
         date_start = date_start.astimezone(TZ_LOCAL)
         date_end = date_end.astimezone(TZ_LOCAL)
@@ -145,11 +150,11 @@ class Prices(BaseDataIO):
         iso_format = '%Y-%m-%dT%H:%M:%S%z'
         self.data[PriceField.FECHA_MODIFICACION] = fecha_modificacion.dt.strftime(iso_format)
 
-    def fullfix(self, date_end: datetime, date_start: datetime = None):
+    def fullfix(self, date_start: datetime, date_end: datetime = None):
         """Ejecuta la auto reparacion de los datos de los precios."""
         self.normalize()
         self.sort_fields()
-        self.filter_fecha_modificacion(date_end, date_start)
+        self.filter_fecha_modificacion(date_start, date_end)
         return self.analyze()
 
     def exceptions(self, analysis: dict[PriceField, Index | MultiIndex]):

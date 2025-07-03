@@ -27,8 +27,14 @@ class AFI(BaseDataIO):
                  **kwargs: ...):
         """Crea un dataframe manipulable para la informacion de la interfaz contable."""
         super().__init__(source, destination, support, mode)
+
+        header = kwargs.pop("header")
+        if support != "json" and header is None and "names" not in kwargs:
+            kwargs["names"] = list(AFIField)
+
         self.load(dtype=str, **kwargs)
         self.data.fillna("", inplace=True)
+        self.data_src = self.data.copy()
 
     def no_match_fields(self):
         """Comprueba los campos que NO existen en el DataFrame."""
@@ -134,7 +140,7 @@ class AFI(BaseDataIO):
         # Ordena los datos
 
         sort_by = [AFIField.CODIGO_DOCUMENTO, AFIField.FECHA_ELABORACION, AFIField.NUMERO]
-        self.data.sort_values(by=sort_by)
+        self.data.sort_values(by=sort_by, inplace=True)
 
     def analyze(self):
         """Analiza los datos y devuelve los erroes encontrados."""
@@ -157,7 +163,7 @@ class AFI(BaseDataIO):
 
         def is_date(value: str):
             try:
-                datetime.strptime(value, "%Y-%m-%d")
+                datetime.strptime(value, "%Y/%m/%d")
                 return True
             except ValueError:
                 return False

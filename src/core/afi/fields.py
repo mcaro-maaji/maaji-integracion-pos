@@ -14,7 +14,7 @@ class AFIField(StrEnum):
     CODIGO_MONEDA = "Codigo Moneda"
     TASA_DE_CAMBIO = "Tasa de Cambio"
     CUENTA_CONTABLE = "Cuenta Contable"
-    NIT_TERCERO_PRINCIAPL = "Nit/Codigo Tercero"
+    NIT_TERCERO_PRINCIPAL = "Nit Codigo Tercero"
     CODIGO_CENTRO_COSTOS = "Codigo Centro Costos"
     BASE_DE_IMPUESTOS = "Base de Impuestos"
     DEBITOS = "Debitos"

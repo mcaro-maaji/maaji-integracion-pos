@@ -25,6 +25,11 @@ class Bills(BaseDataIO):
                  **kwargs: ...):
         """Crea un dataframe manipulable para la informacion de las facturas."""
         super().__init__(source, destination, support, mode)
+
+        header = kwargs.pop("header")
+        if support != "json" and header is None and "names" not in kwargs:
+            kwargs["names"] = list(BillField)
+
         self.load(dtype=str, **kwargs)
         self.data.fillna("", inplace=True)
 
