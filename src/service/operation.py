@@ -2,6 +2,7 @@
 
 from typing import TypeVar, ParamSpec, Generic, Callable, Coroutine, AsyncGenerator, Any
 from inspect import signature, iscoroutine
+from app.logging import get_logger
 from .parameters import ServiceOptParameter, ServiceOptReturn
 from .types import (
     ServiceResult,
@@ -10,6 +11,7 @@ from .types import (
     ServiceOperation as _ServiceOperation,
 )
 
+logger = get_logger("service")
 P = ParamSpec("P")
 R = TypeVar("R")
 
@@ -126,8 +128,14 @@ class ServiceOperation(Generic[P, R], _ServiceOperation[P, R]):
                 raise ServiceParamError(msg) from err
 
     async def exec(self, *args: P.args, **kwargs: P.kwargs) -> ServiceResult[R]:
-        args = [arg["data"] async for arg in self.exec_args(*args)]
-        kwargs = {key: value["data"] async for key, value in self.exec_kwargs(**kwargs)}
+        logger.info("ejecutando el servicio '%s'", self.name)
+
+        try:
+            args = [arg["data"] async for arg in self.exec_args(*args)]
+            kwargs = {key: value["data"] async for key, value in self.exec_kwargs(**kwargs)}
+        except ServiceParamError as err:
+            logger.error("error en los parametros del servicio '%s', %s", self.name, str(err))
+            raise err
 
         func = self.func
         len_args = len(self.parameters)
@@ -142,6 +150,7 @@ class ServiceOperation(Generic[P, R], _ServiceOperation[P, R]):
             else:
                 msgerr += ", " + str(err)
 
+            logger.error(msgerr)
             raise ServiceParamError(msgerr) from err
 
         try:
@@ -149,7 +158,10 @@ class ServiceOperation(Generic[P, R], _ServiceOperation[P, R]):
             if iscoroutine(return_arg):
                 return_arg = await return_arg
 
-            return await self.opt_return.run(return_arg)
+            result = await self.opt_return.run(return_arg)
+            logger.info("el servicio '%s' se ha ejecutado correctamente", self.name)
+            return result
         except Exception as err:
             msgerr += ", " + str(err)
+            logger.error(msgerr)
             raise ServiceError(msgerr) from err
