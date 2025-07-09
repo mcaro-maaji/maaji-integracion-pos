@@ -6,7 +6,7 @@ from io import BytesIO
 from os import PathLike, fsdecode
 from pathlib import Path
 from codecs import lookup as lookup_codec
-from datetime import datetime as _datetime
+from datetime import datetime as _datetime, timedelta as _timedelta
 from pandas import Series
 from service.decorator import services
 from service.parameters import ServiceOptParameter, P, R
@@ -137,8 +137,12 @@ def fields(value: list[str]):
     raise TypeError("el valor arraylist debe contener valores tipo string.")
 
 @services.parameter(type="DateTime")
-def datetime(value: str) -> _datetime:
-    """Parametro que valida un string a una fecha manipulable, formato ISO8601."""
+def datetime(value: str | _datetime) -> _datetime:
+    """Parametro que valida un string a una fecha manipulable, literal 'now' o formato ISO8601."""
+    if isinstance(value, _datetime):
+        return value
+    if value == "now":
+        return _datetime.now()
     try:
         return _datetime.fromisoformat(value)
     except ValueError as err:
@@ -159,3 +163,65 @@ def filename(value: str | None):
     if isinstance(value, str) or value is None:
         return value
     raise TypeError("el valor debe ser de tipo 'string' o None")
+
+@services.parameter(type="TimeDelta")
+def timedelta(value: str) -> _timedelta:
+    """Parametro que convierte un string a un objeto timedelta."""
+    if not isinstance(value, (str, _timedelta)):
+        raise TypeError("el valor debe ser de tipo string o TimeDelta")
+    if isinstance(value, _timedelta):
+        return value
+    try:
+        # Format 1: # weeks, # days, hours:minutes:seconds:microseconds:milliseconds
+        # Format 2: # days, hours:minutes:seconds:microseconds:milliseconds
+        value_parts = value.strip().split(", ")
+        if not value_parts:
+            raise ValueError("...")
+
+        if ":" in value_parts[-1]:
+            time_parts = value_parts.pop()
+        else:
+            time_parts = "00:00:00"
+
+        if len(value_parts) == 2 and " weeks" in value_parts[0] and " days" in value_parts[1]:
+            [weeks_part, days_part] = value_parts
+        elif len(value_parts) == 1 and " days" in value_parts[0]:
+            [weeks_part, days_part] = (None, value_parts[0])
+        else:
+            [weeks_part, days_part] = (None, None)
+
+        num_weeks = 0. if weeks_part is None else float(weeks_part.replace(" weeks", ""))
+        num_days = 0. if days_part is None else float(days_part.replace(" days", ""))
+        num_times = map(float, time_parts.split(":"))
+        keys = ("weeks", "days", "hours", "minutes", "seconds", "microseconds", "milliseconds")
+        items = zip(keys, [num_weeks, num_days, *num_times])
+        kwargs = {}
+        kwargs.update(items)
+        delta = _timedelta(**kwargs)
+
+        if not delta:
+            raise ValueError("...")
+        return delta
+    except ValueError as err:
+        raise ValueError("el valor debe cumplir con el formato TimeDelta[string]") from err
+
+@services.parameter(type="DateTime")
+def datetimefromdelta(value: str | _datetime | _timedelta):
+    """Parametro que verifica si es datetime, si es timedelta se suma a la fecha actual."""
+    if isinstance(value, str):
+        try:
+            return datetime(value)
+        except ValueError:
+            pass
+        if value.startswith("now"):
+            value = value.removeprefix("now")
+        try:
+            return _datetime.now() + timedelta(value)
+        except ValueError as err:
+            raise ValueError("el valor debe ser tipo DateTime[string] | TimeDelta[string]") from err
+    if isinstance(value, _timedelta):
+        return _datetime.now() + value
+    if isinstance(value, _datetime):
+        return value
+
+    raise TypeError("el valor debe ser de tipo string | datetime | timedelta")

@@ -57,8 +57,16 @@ def get_logger(name: str | None = None, context: str = None):
 # Silenciar los loggers de las dependencias
 SILENT = CRITICAL + 1
 
-getLogger("asyncio").setLevel(SILENT)
-getLogger("hypercorn.error").setLevel(SILENT)
-getLogger("hypercorn.access").setLevel(SILENT)
-getLogger("apscheduler.scheduler").setLevel(SILENT)
-getLogger("urllib3.connectionpool").setLevel(SILENT)
+LIST_LOGGER_SET_SILENT = [
+    "asyncio",
+    "hypercorn.error",
+    "hypercorn.access",
+    "apscheduler.scheduler",
+    "apscheduler.executors",
+    "apscheduler.executors.default",
+    "urllib3.connectionpool",
+    "tzlocal"
+]
+
+for name_logger in LIST_LOGGER_SET_SILENT:
+    getLogger(name_logger).setLevel(SILENT)

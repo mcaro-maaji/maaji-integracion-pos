@@ -8,7 +8,7 @@ Modulo para manejar los datos IO de forma general para toda la aplicacion.
 from pathlib import Path
 from typing import Literal, TypeGuard
 from os import PathLike
-from io import BufferedIOBase, BytesIO
+from io import IOBase, BytesIO
 from quart.datastructures import FileStorage
 from pandas import (
     DataFrame,
@@ -20,7 +20,7 @@ from pandas import (
 )
 from pandas.io.clipboard import clipboard_get, clipboard_set
 
-DataIO = str | bytes | PathLike | BufferedIOBase | ExcelFile | FileStorage
+DataIO = str | bytes | PathLike | IOBase | ExcelFile | FileStorage
 SupportDataIO = Literal["object", "csv", "excel", "json", "clipboard"]
 ListSupportDataIO: list[SupportDataIO] = ["object", "csv", "excel", "json", "clipboard"]
 REPR_SUPPORT_DATAIO = "'" + "'|'".join(ListSupportDataIO) + "'"
@@ -31,7 +31,7 @@ REPR_MODE_DATAIO = "'" + "'|'".join(ListModeDataIO) + "'"
 
 def is_dataio(dataio) -> TypeGuard[DataIO]:
     """Comprobar de que el valor sea uno soportado para ser gestionado por la clase BaseDataIO."""
-    dataio_types = (str, bytes, PathLike, BufferedIOBase, ExcelFile, FileStorage, DataFrame)
+    dataio_types = (str, bytes, PathLike, IOBase, ExcelFile, FileStorage, DataFrame)
     return isinstance(dataio, dataio_types)
 
 def transform_dataio(dataio: DataIO | None,
@@ -44,7 +44,7 @@ def transform_dataio(dataio: DataIO | None,
         dataio = ""
 
     if mode == "raw":
-        if not isinstance(dataio, BufferedIOBase):
+        if not isinstance(dataio, IOBase):
             if isinstance(dataio, str):
                 raw_bytes = dataio.encode(kwargs.get("encoding", "utf-8"))
                 dataio = BytesIO(raw_bytes)

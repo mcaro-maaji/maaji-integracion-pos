@@ -2,6 +2,8 @@
 
 __version__ = "1.0.0"
 
+__all__ = ["clients", "bills", "products", "prices", "afi", "settings"]
+
 from service import services
 from . import clients, bills, products, prices, afi, settings
 

@@ -1,0 +1,50 @@
+[
+    {
+        "id": "66513f48-5d06-40ce-8e3f-685e10906142",
+        "name": "automatizacion interfaz contable cegid",
+        "description": "Realiza la integracion de los datos de la interfaz contable (AFI) el flujo en cegid",
+        "script": "cegid.afi.test",
+        "status": "run",
+        "parameters": [],
+        "parameterskv": {
+            "patter": "/InterfazContable/Planos/*.txt",
+            "after_at": "now -32 days, 00:00",
+            "patter_by_input": "/InterfazContable/Planos/FIlesAPTest/*.txt",
+            "patter_by_procesa": "/InterfazContable/Planos/FIlesAPTest/Procesa/*.txt",
+            "patter_by_error": "/InterfazContable/Planos/FIlesAPTest/Error/*.txt",
+            "dirpath_input": "/InterfazContable/Planos/FIlesAPTest/"
+        },
+        "context": {
+            "ftp_name": "MAAJI FTP",
+            "ftp_host": "201.234.71.182",
+            "files": [],
+            "files_by_transfers": [],
+            "files_transfers_support": "csv",
+            "files_transfers_header": "infer",
+            "files_transfers_sep": ";",
+            "files_by_out": [],
+            "files_by_input": [],
+            "files_by_procesa": [],
+            "files_by_error": [],
+            "files_to_input": []
+        },
+        "schedule": {
+            "trigger": "interval",
+            "minutes": 2
+        },
+        "comentarios": [
+            "la tarea se ejecuta cada 10 minutos",
+
+            "el parametrokv `patter_by_transfers` indica el sitio donde la integracion va a leer los archivos de transferencias",
+            "por ejemplo `patter_by_transfers`: `/InterfazContable/Planos/Transferencias/*.txt`",
+            "adicional los parametros de contexto `files_transfers_support`, `files_transfers_header`, `files_transfers_sep`",
+            "1. indican el comportamiento de la lectura de las transferencias, como el soporte de archivo 'excel', 'csv', 'json'",
+            "2. el separador de datos por defecto es punto y coma';'",
+            "3. el encabezado de los archivos, nulo para que los inserte de forma automatica o un numero para indicar la fila que se refiere a los encabezados ejemplo cero 0.",
+
+            "los encabezados deben ser extrictamente los siguientes:",
+            "Clase", "Numero", "Fecha transferencia", "Almacen Emisor", "Almacen Destinatario", "Establecimiento del doc.", "Establecimiento destinatario",
+            "si los archivo contienen estos encabezados, establecer como `files_transfers_header`: 0"
+        ]
+    }
+]

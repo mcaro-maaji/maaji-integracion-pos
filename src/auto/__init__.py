@@ -2,6 +2,9 @@
 
 __version__ = "1.0.0"
 
-__all__ = ["sheduler"]
+__all__ = ["SERVICE_GROUP"]
 
-from .shedule import sheduler
+from service import services
+from . import scripts
+
+SERVICE_GROUP = services.group("auto", scripts.service)

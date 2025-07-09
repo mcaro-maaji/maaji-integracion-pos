@@ -1,0 +1,39 @@
+[
+    {
+        "id": "bd76fe73-1222-4228-b148-585d43254f57",
+        "name": "automatizacion clientes cegid",
+        "description": "Realiza la integracion de los datos de los clientes el flujo en cegid",
+        "script": "cegid.clients.integratedata",
+        "status": "run",
+        "parameters": [],
+        "parameterskv": {
+            "patter": "/Intercambio_de_Archivos_Salida/Clientes_POS/ClientesHcos*.txt",
+            "after_at": "now -32 days, 00:00",
+            "patter_by_input": "/Intercambio_de_Archivos_Salida/Clientes_POS/APFileTest/ClientesHcos*.txt",
+            "patter_by_procesa": "/Intercambio_de_Archivos_Salida/Clientes_POS/APFileTest/Procesa/ClientesHcos*.txt",
+            "patter_by_error": "/Intercambio_de_Archivos_Salida/Clientes_POS/APFileTest/Error/ClientesHcos*.txt",
+            "dirpath_input": "/Intercambio_de_Archivos_Salida/Clientes_POS/APFileTest/"
+        },
+        "context": {
+            "ftp_name": "MAAJI FTP",
+            "ftp_host": "201.234.71.182",
+            "files": [],
+            "files_by_out": [],
+            "files_by_input": [],
+            "files_by_procesa": [],
+            "files_by_error": [],
+            "files_to_input": []
+        },
+        "schedule": {
+            "trigger": "cron",
+            "hour": "0,6,12,18",
+            "minute": 0,
+            "second": 0
+        },
+        "comentarios": [
+            "la tarea se ejecuta 4 veces por dia en las horas:",
+            "00:00:00", "06:00:00", "12:00:00", "18:00:00",
+            "12:00 am", "06:00 am", "12:00 pm", "06:00 pm"
+        ]
+    }
+]

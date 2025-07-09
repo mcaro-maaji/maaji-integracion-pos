@@ -1,0 +1,35 @@
+[
+    {
+        "id": "606fd898-045f-4ade-b189-7ae1f2be41ae",
+        "name": "automatizacion clientes cegid",
+        "description": "Realiza un TEST de la integracion de los datos de los clientes el flujo en cegid",
+        "script": "cegid.clients.test",
+        "status": "run",
+        "parameters": [],
+        "parameterskv": {
+            "patter": "/Intercambio_de_Archivos_Salida/Clientes_POS/ClientesHcos*.txt",
+            "after_at": "now -32 days, 00:00",
+            "patter_by_input": "/Intercambio_de_Archivos_Salida/Clientes_POS/APFileTest/ClientesHcos*.txt",
+            "patter_by_procesa": "/Intercambio_de_Archivos_Salida/Clientes_POS/APFileTest/Procesa/ClientesHcos*.txt",
+            "patter_by_error": "/Intercambio_de_Archivos_Salida/Clientes_POS/APFileTest/Error/ClientesHcos*.txt",
+            "dirpath_input": "/Intercambio_de_Archivos_Salida/Clientes_POS/APFileTest/"
+        },
+        "context": {
+            "ftp_name": "MAAJI FTP",
+            "ftp_host": "201.234.71.182",
+            "files": [],
+            "files_by_out": [],
+            "files_by_input": [],
+            "files_by_procesa": [],
+            "files_by_error": [],
+            "files_to_input": []
+        },
+        "schedule": {
+            "trigger": "interval",
+            "minutes": 1
+        },
+        "comentarios": [
+            "la tarea de prueba se ejecuta cada dos minutos"
+        ]
+    }
+]

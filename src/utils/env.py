@@ -109,6 +109,9 @@ class _Environment:
         """Verifica el tipo de entorno de ejecucion."""
         support_env = ["development", "production"]
 
+        if ":" in self._env:
+            self._env = self._env.split(":")[0]
+
         if self.is_login() and self._env in support_env:
             return self._env
         return "default"

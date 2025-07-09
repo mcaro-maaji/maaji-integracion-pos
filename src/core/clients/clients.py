@@ -64,6 +64,7 @@ class Clients(BaseDataIO):
             - Los valores que van en Mayusculas.
             - Quita los espacios en blanco antes y despues de cada dato.
             - Corrige fechas al formato '%d/%m/%Y'.
+            - Elimina los registros del numero del cliente '222222222'
         """
         fields_exclude_mayus = {
             ClientField.FORMULADIRECCION,
@@ -119,6 +120,14 @@ class Clients(BaseDataIO):
 
         # Todos los cambios en una sola aplicacion al dataframe.
         self.data.update(updates)
+
+        # Filtrar los clientes excluidos, ej 222222222
+
+        excluded_numero_documento = ["222222222"]
+        numero_documento = self.data[ClientField.NUMERODOCUMENTO]
+        numero_documento = numero_documento.isin(excluded_numero_documento)
+        numero_documento = numero_documento[numero_documento]
+        self.data.drop(index=numero_documento.index, inplace=True)
 
     def analyze(self):
         """Analiza los datos y devuelve los erroes encontrados."""
