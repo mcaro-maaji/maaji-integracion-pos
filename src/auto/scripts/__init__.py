@@ -11,4 +11,4 @@ __all__ = [
 
 from . import params, returns
 from .execute import execute
-from .scripts import service
+from .services import service

@@ -6,8 +6,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-scheduler_app = AsyncIOScheduler()
-scheduler_scripts = AsyncIOScheduler()
+scheduler_app = AsyncIOScheduler(job_defaults={"max_instances": 5})
+scheduler_scripts = AsyncIOScheduler(job_defaults={"max_instances": 5})
 
 ScheduleJobStatus = Literal["run", "pause", "removed"]
 schedulejob_status: list[ScheduleJobStatus] = ["run", "pause", "removed"]

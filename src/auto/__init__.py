@@ -2,7 +2,7 @@
 
 __version__ = "1.0.0"
 
-__all__ = ["SERVICE_GROUP"]
+__all__ = ["SERVICE_GROUP", "scripts"]
 
 from service import services
 from . import scripts
