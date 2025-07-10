@@ -150,23 +150,9 @@ def fullfix(*, context: dict, after_at: datetime = None, before_at: datetime = N
     context_upload_files = []
 
     if context_afi_files:
-        with open("../test/data/examples/afi/AutoIC_Test_data_antes.xlsx", "wb") as file:
-            context_afi_files.data.to_excel(file, index=False)
-
-        if context_afi_duplicates:
-            with open("../test/data/examples/afi/AutoIC_Test_data_duplicados_antes.xlsx", "wb") as file:
-                context_afi_duplicates.data.to_excel(file, index=False)
-
         context_afi_files.fullfix(context_afi_transfers, context_afi_duplicates)
         afi_fecha = context_afi_files.data[AFIField.FECHA_ELABORACION]
         afi_fecha = pandas_to_datetime(afi_fecha, format="%Y/%m/%d")
-
-        with open("../test/data/examples/afi/AutoIC_Test_data.xlsx", "wb") as file:
-            context_afi_files.data.to_excel(file, index=False)
-
-        if context_afi_duplicates:
-            with open("../test/data/examples/afi/AutoIC_Test_data_duplicados.xlsx", "wb") as file:
-                context_afi_duplicates.data.to_excel(file, index=False)
 
         for date, afi_file in context_afi_files.data.groupby(afi_fecha.dt.date):
             if date < after_at.date() or date > before_at.date():
@@ -178,8 +164,6 @@ def fullfix(*, context: dict, after_at: datetime = None, before_at: datetime = N
             afi_file.to_csv(buffer, sep=";", index=False, header=False)
             context_files.append(filename)
             context_upload_files.append(buffer)
-            with open("../test/data/examples/afi/" + filename, "wb") as file:
-                afi_file.to_excel(file, index=False)
             logger.info("se ha reparado el archivo de interfaz contable '%s'", filename)
 
     context["files"] = context_files
