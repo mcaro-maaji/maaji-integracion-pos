@@ -5,9 +5,11 @@ from functools import lru_cache
 from os import environ
 from getpass import getpass
 from base64 import urlsafe_b64encode
+from dotenv import load_dotenv
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
+from utils.constants import PATH_STATIC_DATA
 
 class IncorrectCredentials(InvalidToken):
     """Lanzar un error al momento de obtener claves secretas con usuario y contraseña."""
@@ -130,3 +132,10 @@ class _Environment:
             raise IncorrectCredentials("el usuario y contraseña no son validos")
 
 Environment = _Environment()
+
+def exists_key_file():
+    """Comprueba de que exista el archivo de llave para acceder a las variables de entorno"""
+    return (PATH_STATIC_DATA / ".key").is_file()
+
+if exists_key_file():
+    load_dotenv(PATH_STATIC_DATA / ".key", override=True)

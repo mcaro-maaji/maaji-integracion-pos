@@ -1,3 +1,4 @@
+{% from "components/shutdown.html" import btnshutdown %}
 {% macro sidebar(is_open=True) %}
 <div class="d-flex">
     <div id="sidebar" class="bg-dark text-white p-3 d-flex flex-column {{ 'collapsed' if not is_open else '' }}">
@@ -25,9 +26,7 @@
                     <img src="/static/icons/kit_tool_icon.ico" alt="configuration icon" height="25px" class="me-2" />
                     <h6 class="mb-0">Configuración</h6>
                 </a>
-                <a id="btn-systemshutdown" href="/api/shutdown">
-                    <img src="/static/icons/systemshutdown_icon.png" alt="shutdown icon" height="25px" class="me-2" />
-                </a>
+                {{ btnshutdown() }}
             </div>
         </div>
     </div>

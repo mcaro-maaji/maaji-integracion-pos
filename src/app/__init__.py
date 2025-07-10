@@ -6,10 +6,11 @@ from . import (
     server,
     settings,
     custom,
+    login,
     routes,
     pages
 )
 
 __version__ = "1.0.0"
 
-__all__ = ["app", "server", "settings", "custom", "routes", "pages"]
+__all__ = ["app", "server", "settings", "custom", "login", "routes", "pages"]

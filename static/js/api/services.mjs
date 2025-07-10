@@ -103,6 +103,16 @@ export const services = {
             /** @type {ApiServices<number>} */
             save: new ApiServices("clients/shopify/save"),
         }
+    },
+    app: {
+        session: {
+            /** @type {ApiServices<string>} */
+            login: new ApiServices("app/session/login"),
+        },
+        commands: {
+            /** @type {ApiServices<string>} */
+            shutdown: new ApiServices("app/commands/shutdown"),
+        }
     }
 }
 

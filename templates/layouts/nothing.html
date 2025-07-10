@@ -1,6 +1,3 @@
-{% from "components/navbar.html" import navbar %}
-{% from "components/sidebar/layout.html" import sidebar %}
-
 <!DOCTYPE html>
 <html lang="es">
 
@@ -11,8 +8,6 @@
     <link rel="icon" href="/static/icons/maaji_favicon.png" type="image/x-icon">
     <!-- Bootstrap -->
     <link href="/static/css/dependencies/bootstrap-5.3.6-dist/bootstrap.min.css" rel="stylesheet">
-    <!-- Tabulator -->
-    <link href="/static/css/dependencies/tabulator-master-6.3-dist/tabulator.min.css" rel="stylesheet">
     <!-- Global Styles -->
     <link href="/static/css/styles.css" rel="stylesheet">
 </head>
@@ -24,14 +19,10 @@
 
 <body>
     <div class="container-fluid p-0 vh-100 scroll-invisible">
-        {{ navbar(navbar_title=navbar_title) }}
-
-        <div id="mainContent" class="container p-0 me-0 {{'' if sidebar_is_collapsed else 'expanded' }}">
-            {% block main_content %}
+        <div id="mainNothing" class="container-fluid p-0 me-0">
+            {% block main_nothing %}
             {% endblock %}
         </div>
-
-        {{ sidebar(is_open=sidebar_is_collapsed) }}
     </div>
 </body>
 

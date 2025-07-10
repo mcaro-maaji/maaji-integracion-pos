@@ -1,0 +1,22 @@
+{% macro btnshutdown(height="25vmax", classList="me-2") %}
+<a id="btn-shutdown">
+    <img src="/static/icons/systemshutdown_icon.png" alt="shutdown icon" height={{ height }} class={{ classList }} />
+</a>
+
+<script type="module">
+    const script = new TemplateScript("components/shutdown.mjs")
+    await script.exec()
+</script>
+
+<style>
+    #btn-shutdown {
+        cursor: pointer;
+        display: inline-block;
+        transition: transform 0.2s ease;
+    }
+
+    #btn-shutdown:hover {
+        transform: scale(1.1);  /* Zoom al 110% */
+    }
+</style>
+{% endmacro %}

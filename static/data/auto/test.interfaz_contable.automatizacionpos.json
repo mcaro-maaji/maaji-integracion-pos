@@ -30,7 +30,7 @@
         },
         "schedule": {
             "trigger": "interval",
-            "minutes": 2,
+            "seconds": 30,
             "misfire_grace_time": 900
         },
         "comentarios": [

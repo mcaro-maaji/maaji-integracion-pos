@@ -66,12 +66,12 @@ def mapfields(value: list[tuple[str, str]]):
         "type": "[[string, string], ...]"
     })
 
-@services.opt_return(type="object")
+@services.opt_return(type="Response[Object]")
 def response(value: Response):
     """Devolucion de servicio con una respuesta a una peticion HTTP."""
     if not isinstance(value, Response):
         raise TypeError("el valor debe ser de tipo Response")
     return ServiceResult({
         "data": value,
-        "type": "[[string, string], ...]"
+        "type": "Response[Object]"
     })

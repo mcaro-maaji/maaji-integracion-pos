@@ -23,7 +23,7 @@ from .types import (
 from .parameters import ServiceOptParameter, ServiceOptReturn
 from .operation import ServiceOperation
 from .decorator import services
-from . import mapfields, clients, bills, products, prices, afi
+from . import mapfields, clients, bills, products, prices, afi, app
 
 SERVICES_GROUPS = services.groups("groups", mapfields.group, clients.group, bills.group,
-                                  products.group, prices.group, afi.group)
+                                  products.group, prices.group, afi.group, app.group)

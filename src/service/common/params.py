@@ -225,3 +225,13 @@ def datetimefromdelta(value: str | _datetime | _timedelta):
         return value
 
     raise TypeError("el valor debe ser de tipo string | datetime | timedelta")
+
+@services.parameter(type="string")
+def username(value: str):
+    """Parametro para obtener un nombre de usuario."""
+    return string(value)
+
+@services.parameter(type="string")
+def password(value: str):
+    """Parametro para obtener la contraseña de un usuario."""
+    return string(value)

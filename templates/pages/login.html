@@ -1,0 +1,49 @@
+{% extends "layouts/nothing.html" %}
+{% from "components/shutdown.html" import btnshutdown %}
+{% set page_title = "Login" %}
+
+{% block main_nothing %}
+<style>
+    body {
+        background-color: #f2fc9e;
+        background-size: cover;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+<div style="position: absolute; top: 1rem; right: 1rem; z-index: 10;">
+    {{ btnshutdown(height="40px", classList="") }}
+</div>
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+        <a class="text-center mb-4" href="https://www.maaji.co/">
+            <img src="/static/icons/maaji_logo.png" alt="Maaji logo" style="max-width: 150px;">
+        </a>
+        <h4 class="text-center mb-3">Iniciar sesión</h4>
+        <form id="login-form">
+            <div class="mb-3">
+                <label for="username" class="form-label">Usuario</label>
+                <input type="text" class="form-control" id="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </div>
+        </form>
+        <div id="login-log" class="alert alert-danger mt-3 d-none"></div>
+    </div>
+</div>
+
+
+<script type="module">
+    const script = new TemplateScript("pages/login.mjs")
+    await script.exec()
+</script>
+{% endblock %}
