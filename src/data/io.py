@@ -143,6 +143,13 @@ class BaseDataIO:
     def load(self, **kwargs: ...):
         """Carga el set de datos extrayendo la informacion del origen."""
 
+        default_kwargs = {
+            "index_col": False     # Por lo general ningun archivo de datos contiene indices 🤷
+        }
+
+        if self.support not in ["json", "object"]:
+            kwargs.update(default_kwargs)
+
         source = transform_dataio(self.source, self.support, self.mode, **kwargs)
 
         if not is_dataio(source):
