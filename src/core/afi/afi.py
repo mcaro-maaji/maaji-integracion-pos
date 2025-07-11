@@ -253,7 +253,7 @@ class AFI(BaseDataIO):
         tercero_principal = tercero_principal[tercero_principal == ""]
 
         numero = self.data[AFIField.NUMERO]
-        numero = numero[~numero.str.isdigit()]
+        numero = numero[~numero.str.strip().str.isdigit()]
 
         def is_date(value: str):
             try:
